@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="create-section-container">
+    <div class="card">
+        <div class="card-header">
+            <h3>创建新版块</h3>
+            <a href="{{ url_for('sections') }}" class="back-link">
+                <i class="fas fa-arrow-left"></i> 返回版块列表
+            </a>
+        </div>
+        <div class="card-body">
+            <form id="create-section-form" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="form-group mb-3">
+                    <label for="name" class="form-label">版块名称</label>
+                    <input type="text" class="form-control" id="name" name="name" required>
+                    <small class="text-muted">版块名称应简洁明了，不超过50个字符</small>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="description" class="form-label">版块描述</label>
+                    <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                    <small class="text-muted">简要描述版块的主题和内容范围</small>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="icon" class="form-label">版块图标</label>
+                    <div class="icon-select-container">
+                        <input type="text" class="form-control" id="icon" name="icon" value="fas fa-comments">
+                        <div class="icon-preview">
+                            <i class="fas fa-comments" id="icon-preview-elem"></i>
+                        </div>
+                    </div>
+                    <small class="text-muted">使用Font Awesome图标类名，如：fas fa-code, fas fa-palette</small>
+                    <div class="icon-suggestions mt-2">
+                        <span class="icon-option" data-icon="fas fa-comments"><i class="fas fa-comments"></i></span>
+                        <span class="icon-option" data-icon="fas fa-code"><i class="fas fa-code"></i></span>
+                        <span class="icon-option" data-icon="fas fa-palette"><i class="fas fa-palette"></i></span>
+                        <span class="icon-option" data-icon="fas fa-briefcase"><i class="fas fa-briefcase"></i></span>
+                        <span class="icon-option" data-icon="fas fa-newspaper"><i class="fas fa-newspaper"></i></span>
+                        <span class="icon-option" data-icon="fas fa-book"><i class="fas fa-book"></i></span>
+                        <span class="icon-option" data-icon="fas fa-gamepad"><i class="fas fa-gamepad"></i></span>
+                        <span class="icon-option" data-icon="fas fa-film"><i class="fas fa-film"></i></span>
+                        <span class="icon-option" data-icon="fas fa-music"><i class="fas fa-music"></i></span>
+                        <span class="icon-option" data-icon="fas fa-heart"><i class="fas fa-heart"></i></span>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="order" class="form-label">显示顺序</label>
+                    <input type="number" class="form-control" id="order" name="order" value="0" min="0">
+                    <small class="text-muted">数字越小，版块显示越靠前</small>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">创建版块</button>
+                    <button type="button" class="btn btn-outline" onclick="window.location.href='{{ url_for('sections') }}'">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.create-section-container {
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.card {
+    box-shadow: var(--shadow-sm);
+    border-radius: var(--border-radius-lg);
+    border: none;
+    margin-bottom: 2rem;
+}
+
+.card-header {
+    background-color: var(--background-secondary);
+    border-bottom: 1px solid var(--border-color);
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-header h3 {
+    margin: 0;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.back-link {
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: var(--transition-base);
+}
+
+.back-link:hover {
+    color: var(--primary-color);
+}
+
+.card-body {
+    padding: 2rem;
+}
+
+.form-label {
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.icon-select-container {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.icon-preview {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: var(--border-radius);
+    font-size: 1.25rem;
+}
+
+.icon-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.icon-option {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--background-tertiary);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: var(--transition-base);
+}
+
+.icon-option:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 图标预览功能
+    const iconInput = document.getElementById('icon');
+    const iconPreview = document.getElementById('icon-preview-elem');
+    
+    // 监听输入变化更新预览
+    iconInput.addEventListener('input', function() {
+        updateIconPreview();
+    });
+    
+    // 点击图标选项
+    const iconOptions = document.querySelectorAll('.icon-option');
+    iconOptions.forEach(function(option) {
+        option.addEventListener('click', function() {
+            const iconClass = this.getAttribute('data-icon');
+            iconInput.value = iconClass;
+            updateIconPreview();
+        });
+    });
+    
+    function updateIconPreview() {
+        // 移除所有类
+        iconPreview.className = '';
+        // 添加新类
+        const classes = iconInput.value.split(' ');
+        classes.forEach(function(cls) {
+            if (cls.trim()) {
+                iconPreview.classList.add(cls.trim());
+            }
+        });
+    }
+    
+    // 表单提交处理
+    const form = document.getElementById('create-section-form');
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // 表单验证
+        const name = document.getElementById('name').value.trim();
+        if (!name) {
+            alert('版块名称不能为空');
+            return;
+        }
+        
+        // 收集表单数据
+        const formData = new FormData(form);
+        
+        // 发送请求
+        fetch('{{ url_for("create_section") }}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('版块创建成功');
+                window.location.href = '{{ url_for("sections") }}';
+            } else {
+                alert('创建失败: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('提交过程中发生错误');
+        });
+    });
+});
+</script>
+{% endblock %} 

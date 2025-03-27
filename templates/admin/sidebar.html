@@ -1,0 +1,110 @@
+<!-- 侧边栏导航 -->
+<ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+    <!-- 侧边栏品牌 -->
+    <a class="sidebar-brand d-flex align-items-center justify-content-center" href="{{ url_for('admin_panel') }}">
+        <div class="sidebar-brand-icon">
+            <i class="fas fa-cogs"></i>
+        </div>
+        <div class="sidebar-brand-text mx-3">管理面板</div>
+    </a>
+
+    <!-- 分隔线 -->
+    <hr class="sidebar-divider my-0">
+
+    <!-- 仪表盘链接 -->
+    <li class="nav-item {{ 'active' if active_page == 'dashboard' }}">
+        <a class="nav-link" href="{{ url_for('admin_panel') }}">
+            <i class="fas fa-fw fa-tachometer-alt"></i>
+            <span>仪表盘</span>
+        </a>
+    </li>
+
+    <!-- 分隔线 -->
+    <hr class="sidebar-divider">
+
+    <!-- 管理标题 -->
+    <div class="sidebar-heading">
+        内容管理
+    </div>
+
+    <!-- 版块管理 -->
+    <li class="nav-item {{ 'active' if active_page == 'sections' }}">
+        <a class="nav-link" href="{{ url_for('admin_sections') }}">
+            <i class="fas fa-folder"></i>
+            <span>版块管理</span>
+        </a>
+    </li>
+
+    <!-- 帖子管理 -->
+    <li class="nav-item {{ 'active' if active_page == 'manage_posts' }}">
+        <a class="nav-link" href="{{ url_for('admin_posts') }}">
+            <i class="fas fa-file-alt"></i>
+            <span>帖子管理</span>
+        </a>
+    </li>
+    
+    <!-- 评论管理 -->
+    <li class="nav-item {{ 'active' if active_page == 'manage_comments' }}">
+        <a class="nav-link" href="{{ url_for('manage_comments') }}">
+            <i class="fas fa-comments"></i>
+            <span>评论管理</span>
+        </a>
+    </li>
+
+    <!-- 举报管理 -->
+    <li class="nav-item {{ 'active' if active_page == 'manage_reports' }}">
+        <a class="nav-link" href="{{ url_for('admin_reports') }}">
+            <i class="fas fa-flag"></i>
+            <span>举报管理</span>
+        </a>
+    </li>
+
+    <!-- 分隔线 -->
+    <hr class="sidebar-divider">
+
+    <!-- 用户标题 -->
+    <div class="sidebar-heading">
+        用户管理
+    </div>
+
+    <!-- 用户管理 -->
+    <li class="nav-item {{ 'active' if active_page == 'manage_users' }}">
+        <a class="nav-link" href="{{ url_for('admin_users') }}">
+            <i class="fas fa-users"></i>
+            <span>用户管理</span>
+        </a>
+    </li>
+
+    <!-- 分隔线 -->
+    <hr class="sidebar-divider">
+
+    <!-- 系统标题 -->
+    <div class="sidebar-heading">
+        系统
+    </div>
+
+    <!-- 网站设置 -->
+    <li class="nav-item {{ 'active' if active_page == 'settings' }}">
+        <a class="nav-link" href="{{ url_for('admin_settings') }}">
+            <i class="fas fa-cog"></i>
+            <span>网站设置</span>
+        </a>
+    </li>
+
+    <!-- 系统日志 -->
+    <li class="nav-item {{ 'active' if active_page == 'logs' }}">
+        <a class="nav-link" href="{{ url_for('admin_logs') }}">
+            <i class="fas fa-clipboard-list"></i>
+            <span>系统日志</span>
+        </a>
+    </li>
+
+    <!-- 分隔线 -->
+    <hr class="sidebar-divider d-none d-md-block">
+
+    <!-- 收起侧边栏 -->
+    <div class="text-center d-none d-md-inline">
+        <button class="rounded-circle border-0" id="sidebarToggle"></button>
+    </div>
+</ul>
+<!-- 侧边栏结束 --> 

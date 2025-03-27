@@ -1,0 +1,565 @@
+{% extends "admin/base.html" %}
+
+{% block title %}控制面板 - IdeaSphere 管理后台{% endblock %}
+
+{% block header_title %}控制面板{% endblock %}
+
+{% block content %}
+<!-- 欢迎消息 -->
+<div class="welcome-banner card">
+    <div class="welcome-banner-content">
+        <div class="welcome-message">
+            <h2>欢迎回来，{{ g.user.username }}！</h2>
+            <p>今天是 {{ current_date.strftime('%Y年%m月%d日') }}，{{ g.user.username }} 管理员。查看下方的统计数据了解网站概况。</p>
+        </div>
+        <div class="welcome-actions">
+            <a href="{{ url_for('admin_users') }}" class="btn btn-primary">
+                <i class="fas fa-users"></i> 管理用户
+            </a>
+            <a href="{{ url_for('admin_sections') }}" class="btn btn-light">
+                <i class="fas fa-layer-group"></i> 管理版块
+            </a>
+        </div>
+    </div>
+    <div class="welcome-banner-decoration">
+        <div class="decoration-circle"></div>
+        <div class="decoration-circle"></div>
+        <div class="decoration-circle"></div>
+    </div>
+</div>
+
+<!-- 统计数据 -->
+<div class="row">
+    <div class="col-3">
+        <div class="card stats-card">
+            <div class="stats-icon primary">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stats-info">
+                <div class="stats-value">{{ user_count }}</div>
+                <p class="stats-label">注册用户</p>
+                <div class="stats-change positive">
+                    <i class="fas fa-arrow-up"></i> {{ new_users_percent }}% 本周
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-3">
+        <div class="card stats-card">
+            <div class="stats-icon success">
+                <i class="fas fa-file-alt"></i>
+            </div>
+            <div class="stats-info">
+                <div class="stats-value">{{ post_count }}</div>
+                <p class="stats-label">帖子总数</p>
+                <div class="stats-change positive">
+                    <i class="fas fa-arrow-up"></i> {{ new_posts_percent }}% 本周
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-3">
+        <div class="card stats-card">
+            <div class="stats-icon warning">
+                <i class="fas fa-comments"></i>
+            </div>
+            <div class="stats-info">
+                <div class="stats-value">{{ comment_count }}</div>
+                <p class="stats-label">评论总数</p>
+                <div class="stats-change positive">
+                    <i class="fas fa-arrow-up"></i> {{ new_comments_percent }}% 本周
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-3">
+        <div class="card stats-card">
+            <div class="stats-icon danger">
+                <i class="fas fa-heart"></i>
+            </div>
+            <div class="stats-info">
+                <div class="stats-value">{{ like_count }}</div>
+                <p class="stats-label">点赞总数</p>
+                <div class="stats-change positive">
+                    <i class="fas fa-arrow-up"></i> {{ new_likes_percent }}% 本周
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 图表区域 -->
+<div class="row">
+    <div class="col-8">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">活跃趋势</h3>
+                <div class="card-actions">
+                    <div class="chart-period-selector">
+                        <button class="chart-period-btn active" data-period="week">周</button>
+                        <button class="chart-period-btn" data-period="month">月</button>
+                        <button class="chart-period-btn" data-period="year">年</button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="activityChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-4">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">版块分布</h3>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="sectionsChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 最新活动 -->
+<div class="row">
+    <div class="col-6">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">最新用户</h3>
+                <a href="{{ url_for('admin_users') }}" class="btn btn-light btn-icon">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <div class="user-list">
+                    {% for user in latest_users %}
+                    <div class="user-list-item">
+                        <div class="user-avatar">
+                            {{ user.username[0] | upper }}
+                        </div>
+                        <div class="user-info">
+                            <div class="user-name">{{ user.username }}</div>
+                            <div class="user-meta">注册于 {{ user.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                        </div>
+                        <div class="user-action">
+                            <a href="#" class="btn btn-light btn-icon">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">最新帖子</h3>
+                <a href="{{ url_for('admin_posts') }}" class="btn btn-light btn-icon">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <div class="post-list">
+                    {% for post in latest_posts %}
+                    <div class="post-list-item">
+                        <div class="post-icon">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <div class="post-info">
+                            <div class="post-title">{{ post.title }}</div>
+                            <div class="post-meta">
+                                <span>by {{ post.author.username }}</span>
+                                <span>{{ post.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                            </div>
+                        </div>
+                        <div class="post-action">
+                            <a href="{{ url_for('view_post', post_id=post.id) }}" class="btn btn-light btn-icon">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* 欢迎横幅 */
+    .welcome-banner {
+        background: linear-gradient(120deg, var(--primary) 0%, var(--primary-darker) 100%);
+        color: white;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .welcome-banner-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .welcome-message h2 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .welcome-message p {
+        font-size: 0.875rem;
+        opacity: 0.9;
+        margin-bottom: 0;
+    }
+    
+    .welcome-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+    
+    .welcome-banner-decoration {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 1;
+        overflow: hidden;
+    }
+    
+    .decoration-circle {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .decoration-circle:nth-child(1) {
+        width: 150px;
+        height: 150px;
+        top: -30px;
+        right: -30px;
+    }
+    
+    .decoration-circle:nth-child(2) {
+        width: 80px;
+        height: 80px;
+        bottom: 20px;
+        right: 80px;
+    }
+    
+    .decoration-circle:nth-child(3) {
+        width: 60px;
+        height: 60px;
+        bottom: -20px;
+        right: 30px;
+    }
+    
+    /* 图表选择器 */
+    .chart-period-selector {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        background: var(--gray-100);
+        border-radius: var(--border-radius-md);
+        padding: 0.25rem;
+    }
+    
+    .chart-period-btn {
+        background: none;
+        border: none;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: var(--gray-500);
+        border-radius: var(--border-radius-sm);
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+    
+    .chart-period-btn.active {
+        background: white;
+        color: var(--gray-900);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+    
+    /* 用户列表 */
+    .user-list {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .user-list-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--gray-200);
+    }
+    
+    .user-list-item:last-child {
+        border-bottom: none;
+    }
+    
+    .user-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: var(--border-radius-full);
+        background: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        color: white;
+        margin-right: 1rem;
+    }
+    
+    .user-info {
+        flex: 1;
+    }
+    
+    .user-name {
+        font-weight: 500;
+        font-size: 0.875rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .user-meta {
+        font-size: 0.75rem;
+        color: var(--gray-500);
+    }
+    
+    .user-action {
+        margin-left: 1rem;
+    }
+    
+    /* 帖子列表 */
+    .post-list {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .post-list-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--gray-200);
+    }
+    
+    .post-list-item:last-child {
+        border-bottom: none;
+    }
+    
+    .post-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: var(--border-radius-full);
+        background: var(--gray-100);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary);
+        margin-right: 1rem;
+    }
+    
+    .post-info {
+        flex: 1;
+        overflow: hidden;
+    }
+    
+    .post-title {
+        font-weight: 500;
+        font-size: 0.875rem;
+        margin-bottom: 0.25rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .post-meta {
+        font-size: 0.75rem;
+        color: var(--gray-500);
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .post-action {
+        margin-left: 1rem;
+    }
+    
+    /* 图表容器 */
+    .chart-container {
+        position: relative;
+        width: 100%;
+    }
+    
+    .p-0 {
+        padding: 0 !important;
+    }
+</style>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 使用后端提供的数据
+        const trendsData = {{ trends|tojson }};
+        const sectionData = {{ section_data|tojson }};
+        
+        // 活跃趋势图表
+        const activityCtx = document.getElementById('activityChart').getContext('2d');
+        const activityChart = new Chart(activityCtx, {
+            type: 'line',
+            data: {
+                labels: trendsData.labels,
+                datasets: [{
+                    label: '新用户',
+                    data: trendsData.users,
+                    borderColor: '#5e72e4',
+                    backgroundColor: 'rgba(94, 114, 228, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: '#5e72e4',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }, {
+                    label: '新帖子',
+                    data: trendsData.posts,
+                    borderColor: '#2dce89',
+                    backgroundColor: 'rgba(45, 206, 137, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: '#2dce89',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }, {
+                    label: '新评论',
+                    data: trendsData.comments,
+                    borderColor: '#fb6340',
+                    backgroundColor: 'rgba(251, 99, 64, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: '#fb6340',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            boxWidth: 12,
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(17, 24, 39, 0.9)',
+                        titleFont: {
+                            size: 13
+                        },
+                        bodyFont: {
+                            size: 12
+                        },
+                        padding: 12,
+                        cornerRadius: 8
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        grid: {
+                            borderDash: [2, 4],
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        beginAtZero: true
+                    }
+                },
+                elements: {
+                    line: {
+                        borderWidth: 3
+                    }
+                }
+            }
+        });
+        
+        // 版块分布图表
+        const sectionsCtx = document.getElementById('sectionsChart').getContext('2d');
+        const sectionsChart = new Chart(sectionsCtx, {
+            type: 'doughnut',
+            data: {
+                labels: sectionData.labels,
+                datasets: [{
+                    data: sectionData.data,
+                    backgroundColor: sectionData.colors,
+                    borderWidth: 0,
+                    hoverOffset: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '65%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 12,
+                            padding: 15,
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(17, 24, 39, 0.9)',
+                        titleFont: {
+                            size: 13
+                        },
+                        bodyFont: {
+                            size: 12
+                        },
+                        padding: 12,
+                        cornerRadius: 8
+                    }
+                }
+            }
+        });
+        
+        // 图表周期选择器
+        const periodBtns = document.querySelectorAll('.chart-period-btn');
+        periodBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                periodBtns.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                const period = this.dataset.period;
+                // 这里后期可以通过AJAX请求更新不同周期的数据
+            });
+        });
+    });
+</script>
+{% endblock %} 

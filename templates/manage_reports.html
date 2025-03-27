@@ -1,58 +1,399 @@
-{% extends "admin_panel.html" %}
+{% extends "admin/base.html" %}
 
-{% block admin_content %}
+{% block title %}举报管理 - IdeaSphere 管理后台{% endblock %}
+
+{% block header_title %}举报管理{% endblock %}
+
+{% block content %}
 <div class="card">
     <div class="card-header">
-        <h5 class="text-center">管理举报</h5>
+        <h3 class="card-title">所有举报</h3>
+        <div class="card-actions">
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="all">全部</button>
+                <button class="filter-btn" data-filter="pending">待处理</button>
+                <button class="filter-btn" data-filter="handled">已处理</button>
+            </div>
+        </div>
     </div>
     <div class="card-body">
-        {% if reports %}
-            <table class="table table-hover">
+        <div class="table-responsive">
+            <table class="table">
                 <thead>
                     <tr>
-                        <th>#</th>
-                        <th>用户</th>
-                        <th>帖子 ID</th>
-                        <th>评论 ID</th>
-                        <th>原因</th>
+                        <th>ID</th>
+                        <th>类型</th>
+                        <th>举报内容</th>
+                        <th>举报理由</th>
+                        <th>举报者</th>
+                        <th>举报时间</th>
                         <th>状态</th>
                         <th>操作</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for report in reports %}
-                    <tr>
+                    <tr data-status="{{ report.status }}">
                         <td>{{ report.id }}</td>
-                        <td>{{ report.user.username }}</td>
-                        <td>{{ report.post_id }}</td>
-                        <td>{{ report.comment_id }}</td>
-                        <td>{{ report.reason }}</td>
-                        <td>{{ report.status }}</td>
                         <td>
-                            {% if report.status == 'pending' and (session['role'] == 'admin' or session['role'] == 'moderator') %}
-                                <button class="btn btn-danger btn-sm" onclick="handleReport({{ report.id }}, 'valid')">
-                                    <i class="fas fa-check"></i> 已违规
+                            <span class="badge {% if report.type == 'post' %}badge-primary{% else %}badge-info{% endif %}">
+                                {{ "帖子" if report.type == "post" else "评论" }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="content-preview">
+                                {% if report.type == "post" %}
+                                <a href="{{ url_for('view_post', post_id=report.post_id) }}" target="_blank" class="preview-link">
+                                    {{ report.post.title if report.post else "已删除的帖子" }}
+                                </a>
+                                {% else %}
+                                <a href="{{ url_for('view_post', post_id=report.comment.post_id) }}#comment-{{ report.comment_id }}" target="_blank" class="preview-link">
+                                    {{ report.comment.content[:30] + "..." if report.comment and report.comment.content|length > 30 else report.comment.content if report.comment else "已删除的评论" }}
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>{{ report.reason }}</td>
+                        <td>{{ report.reporter.username }}</td>
+                        <td>{{ report.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>
+                            <span class="status-badge {% if report.status == 'pending' %}status-pending{% else %}status-handled{% endif %}">
+                                {{ "待处理" if report.status == "pending" else "已处理" }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="table-actions">
+                                {% if report.status == 'pending' %}
+                                <button class="action-btn handle-report-btn" title="处理举报" data-id="{{ report.id }}" data-type="{{ report.type }}" data-content-id="{{ report.post_id if report.type == 'post' else report.comment_id }}">
+                                    <i class="fas fa-check"></i>
                                 </button>
-                                <button class="btn btn-success btn-sm" onclick="handleReport({{ report.id }}, 'invalid')">
-                                    <i class="fas fa-times"></i> 未违规
+                                <button class="action-btn ignore-report-btn" title="忽略举报" data-id="{{ report.id }}">
+                                    <i class="fas fa-times"></i>
                                 </button>
                             {% else %}
-                                已处理
+                                <span class="action-text">已处理</span>
                             {% endif %}
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
-        {% else %}
-            <div class="alert alert-info text-center">
-                暂无举报
             </div>
-        {% endif %}
     </div>
 </div>
 
-<script src="{{ url_for('static', filename='js/report.js') }}"></script>
-<script src="{{ url_for('static', filename='js/csrf.js') }}"></script>
+<style>
+    /* 表格样式 */
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .table th, .table td {
+        padding: 0.75rem 1rem;
+        vertical-align: middle;
+    }
+    
+    .table thead th {
+        background-color: var(--gray-100);
+        font-weight: 500;
+        font-size: 0.8125rem;
+        color: var(--gray-700);
+        text-align: left;
+        border-bottom: 1px solid var(--gray-200);
+    }
+    
+    .table tbody tr {
+        border-bottom: 1px solid var(--gray-200);
+        transition: all 0.15s ease;
+    }
+    
+    .table tbody tr:hover {
+        background-color: var(--gray-50);
+    }
+    
+    .table tbody tr:last-child {
+        border-bottom: none;
+    }
+    
+    /* 过滤按钮 */
+    .filter-buttons {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .filter-btn {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.75rem;
+        border: 1px solid var(--gray-300);
+        border-radius: var(--border-radius-md);
+        background: white;
+        color: var(--gray-700);
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+    
+    .filter-btn:hover {
+        background: var(--gray-100);
+    }
+    
+    .filter-btn.active {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+    }
+    
+    /* 内容预览 */
+    .content-preview {
+        max-width: 200px;
+    }
+    
+    .preview-link {
+        font-size: 0.875rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: block;
+        color: var(--primary);
+        transition: color 0.15s ease;
+    }
+    
+    .preview-link:hover {
+        color: var(--primary-darker);
+        text-decoration: none;
+    }
+    
+    /* 状态标签 */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        border-radius: var(--border-radius-full);
+    }
+    
+    .status-pending {
+        background-color: rgba(251, 99, 64, 0.1);
+        color: var(--warning);
+    }
+    
+    .status-handled {
+        background-color: rgba(45, 206, 137, 0.1);
+        color: var(--success);
+    }
+    
+    /* 操作按钮 */
+    .table-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .action-btn {
+        width: 28px;
+        height: 28px;
+        border-radius: var(--border-radius-full);
+        background: var(--gray-100);
+        color: var(--gray-700);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        font-size: 0.75rem;
+    }
+    
+    .action-btn:hover {
+        background: var(--gray-200);
+        color: var(--gray-900);
+    }
+    
+    .handle-report-btn:hover {
+        background: var(--success);
+        color: white;
+    }
+    
+    .ignore-report-btn:hover {
+        background: var(--danger);
+        color: white;
+    }
+    
+    .action-text {
+        font-size: 0.75rem;
+        color: var(--gray-500);
+    }
+    
+    /* 徽章 */
+    .badge {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        border-radius: var(--border-radius-sm);
+    }
+    
+    .badge-primary {
+        background-color: var(--primary);
+        color: white;
+    }
+    
+    .badge-info {
+        background-color: var(--info);
+        color: white;
+    }
+    
+    /* 响应式表格 */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+</style>
 
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 过滤功能
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const reportRows = document.querySelectorAll('tbody tr');
+        
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const filter = this.dataset.filter;
+                
+                // 更新按钮状态
+                filterBtns.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                // 过滤表格行
+                reportRows.forEach(row => {
+                    if (filter === 'all') {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = row.dataset.status === filter ? '' : 'none';
+                    }
+                });
+            });
+        });
+        
+        // 处理举报
+        const handleReportBtns = document.querySelectorAll('.handle-report-btn');
+        
+        handleReportBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const reportId = this.dataset.id;
+                const reportType = this.dataset.type;
+                const contentId = this.dataset.contentId;
+                
+                // 创建处理选项对话框
+                const confirmDialog = document.createElement('div');
+                confirmDialog.className = 'modal fade';
+                confirmDialog.id = 'handleReportModal';
+                confirmDialog.innerHTML = `
+                    <div class="modal-dialog modal-dialog-centered" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h4 class="modal-title"><i class="fas fa-check"></i> 处理举报</h4>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <p>请选择处理方式：</p>
+                                <div class="action-options">
+                                    <button class="action-option" id="deleteContentBtn">
+                                        <i class="fas fa-trash-alt"></i>
+                                        <span>删除${reportType === 'post' ? '帖子' : '评论'}</span>
+                                    </button>
+                                    <button class="action-option" id="warnUserBtn">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        <span>警告用户</span>
+                                    </button>
+                                    <button class="action-option" id="ignoreReportBtn">
+                                        <i class="fas fa-times"></i>
+                                        <span>忽略举报</span>
+                                    </button>
+                                </div>
+                                <div class="action-note">
+                                    <label for="noteInput" class="form-label">处理备注：</label>
+                                    <textarea id="noteInput" class="form-control" rows="3" placeholder="输入处理备注..."></textarea>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-light" data-dismiss="modal">取消</button>
+                                <button type="button" class="btn btn-primary" id="confirmActionBtn" disabled>确认处理</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(confirmDialog);
+                
+                // 显示对话框
+                $('#handleReportModal').modal('show');
+                
+                // 选择处理方式
+                const actionOptions = document.querySelectorAll('.action-option');
+                const confirmActionBtn = document.getElementById('confirmActionBtn');
+                let selectedAction = null;
+                
+                actionOptions.forEach(option => {
+                    option.addEventListener('click', function() {
+                        actionOptions.forEach(o => o.classList.remove('selected'));
+                        this.classList.add('selected');
+                        selectedAction = this.id;
+                        confirmActionBtn.disabled = false;
+                    });
+                });
+                
+                // 确认处理
+                confirmActionBtn.addEventListener('click', function() {
+                    if (!selectedAction) return;
+                    
+                    const note = document.getElementById('noteInput').value;
+                    
+                    // 这里应该发送AJAX请求
+                    console.log('处理举报:', reportId, selectedAction, note);
+                    
+                    // 关闭对话框
+                    $('#handleReportModal').modal('hide');
+                    
+                    // 刷新页面
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, 500);
+                });
+                
+                // 对话框关闭后移除
+                $('#handleReportModal').on('hidden.bs.modal', function() {
+                    setTimeout(function() {
+                        if (document.body.contains(confirmDialog)) {
+                            document.body.removeChild(confirmDialog);
+                        }
+                    }, 500);
+                });
+            });
+        });
+        
+        // 忽略举报
+        const ignoreReportBtns = document.querySelectorAll('.ignore-report-btn');
+        
+        ignoreReportBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const reportId = this.dataset.id;
+                
+                if (confirm('确定要忽略此举报吗？')) {
+                    // 这里应该发送AJAX请求
+                    console.log('忽略举报:', reportId);
+                    
+                    // 刷新页面
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, 500);
+                }
+            });
+        });
+    });
+</script>
 {% endblock %}

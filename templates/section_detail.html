@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="section-detail-page">
+    <div class="section-header">
+        <div class="header-left">
+            <a href="{{ url_for('sections') }}" class="back-link">
+                <i class="fas fa-arrow-left"></i> 返回版块列表
+            </a>
+            <h2><i class="{{ section.icon }}"></i> {{ section.name }}</h2>
+            <p class="section-description">{{ section.description }}</p>
+        </div>
+        <div class="header-right">
+            {% if g.user %}
+            <a href="{{ url_for('create_post') }}?section_id={{ section.id }}" class="btn-create-post">
+                <i class="fas fa-plus"></i> 在此版块发帖
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="section-stats-bar">
+        <div class="stat-item">
+            <i class="fas fa-file-alt"></i>
+            <span>帖子数: {{ section.post_count }}</span>
+        </div>
+        <div class="stat-item">
+            <i class="fas fa-comment"></i>
+            <span>评论数: {{ section.comment_count }}</span>
+        </div>
+    </div>
+    
+    <div class="posts-list">
+        <h3 class="list-title">帖子列表</h3>
+        
+        {% if posts %}
+            {% for post in posts %}
+            <div class="post-card">
+                <div class="post-header">
+                    <div class="post-author">
+                        <i class="fas fa-user-circle"></i>
+                        <span>{{ post.author.username }}</span>
+                    </div>
+                    <div class="post-meta">
+                        <span class="post-time"><i class="fas fa-clock"></i> {{ post.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                        <span><i class="fas fa-heart"></i> {{ post.like_count }}</span>
+                    </div>
+                </div>
+                <h3 class="post-title"><a href="{{ url_for('view_post', post_id=post.id) }}">{{ post.title }}</a></h3>
+                <p class="post-excerpt">{{ remove_markdown(post.content[:150]) }}...</p>
+                <div class="post-footer">
+                    <a href="{{ url_for('view_post', post_id=post.id) }}" class="view-post-btn">
+                        <i class="fas fa-eye"></i> 查看详情
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+            
+            <!-- 分页 -->
+            {% if pagination.pages > 1 %}
+            <div class="pagination">
+                {% if pagination.has_prev %}
+                <a href="{{ url_for('section_detail', section_id=section.id, page=pagination.prev_num) }}" class="page-link">
+                    <i class="fas fa-chevron-left"></i> 上一页
+                </a>
+                {% endif %}
+                
+                <span class="page-info">{{ pagination.page }} / {{ pagination.pages }}</span>
+                
+                {% if pagination.has_next %}
+                <a href="{{ url_for('section_detail', section_id=section.id, page=pagination.next_num) }}" class="page-link">
+                    下一页 <i class="fas fa-chevron-right"></i>
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+            
+        {% else %}
+        <div class="no-posts">
+            <i class="fas fa-file-alt"></i>
+            <p>此版块暂无帖子</p>
+            {% if g.user %}
+            <a href="{{ url_for('create_post') }}?section_id={{ section.id }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> 发布第一个帖子
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<style>
+.section-detail-page {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+}
+
+.header-left {
+    flex: 1;
+}
+
+.back-link {
+    display: inline-block;
+    color: var(--text-secondary);
+    text-decoration: none;
+    margin-bottom: 0.75rem;
+    transition: var(--transition-base);
+}
+
+.back-link:hover {
+    color: var(--primary-color);
+}
+
+.section-header h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.section-description {
+    color: var(--text-secondary);
+    margin-bottom: 0;
+}
+
+.section-stats-bar {
+    display: flex;
+    gap: 2rem;
+    padding: 1rem 1.5rem;
+    background-color: var(--background-secondary);
+    border-radius: var(--border-radius);
+    margin-bottom: 2rem;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+}
+
+.posts-list {
+    margin-top: 2rem;
+}
+
+.list-title {
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.page-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--primary-color);
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius);
+    transition: var(--transition-base);
+}
+
+.page-link:hover {
+    background-color: var(--background-secondary);
+}
+
+.page-info {
+    color: var(--text-secondary);
+    padding: 0.5rem 1rem;
+}
+
+.no-posts {
+    text-align: center;
+    padding: 3rem;
+    background: white;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.no-posts i {
+    font-size: 3rem;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+}
+
+.no-posts p {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+}
+</style>
+{% endblock %} 

@@ -1,75 +1,199 @@
 {% extends "base.html" %}
 
 {% block content %}
-<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
+<div class="create-post-container">
+    <div class="card">
+        <div class="card-header">
+            <h3>创建新主题</h3>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="text-center">创建新主题</h5>
-            </div>
-            <div class="card-body">
-                <form method="POST">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
-                    <!-- 标题 -->
-                    <div class="mb-3">
-                        <label for="title" class="form-label">
-                            <i class="fas fa-heading"></i> 标题
-                        </label>
-                        <input type="text" class="form-control" id="title" name="title" placeholder="输入帖子标题" required>
-                    </div>
-
-                    <!-- 内容 -->
-                    <div class="mb-3">
-                        <label for="content" class="form-label">
-                            <i class="fas fa-pencil-alt"></i> 内容（支持 Markdown 格式）
-                        </label>
-                        <div class="input-group">
-                            <textarea class="form-control" id="content" name="content" rows="6" placeholder="输入帖子内容"
-                                required></textarea>
-                            <span class="input-group-text" id="emojiButton" title="添加表情">
-                                <i class="fas fa-smile"></i>
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- 提交按钮 -->
-                    <div class="text-center">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-paper-plane"></i> 发布
-                        </button>
-                    </div>
-                </form>
-
-                <!-- Emoji 弹出框 -->
-                <div id="emojiPopup" style="display: none;
-                        position: absolute;
-                        left: 100%;
-                        top: 0;
-                        margin-left: 8px; /* 添加右侧间距 */
-                        /* 保持原有样式 */
-                        background: white;
-                        border: 1px solid #ccc;
-                        padding: 10px;
-                        border-radius: 8px;
-                        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-                        z-index: 1000;">
-                    <span class="emoji">😀</span>
-                    <span class="emoji">😎</span>
-                    <span class="emoji">👍</span>
-                    <span class="emoji">❤️</span>
-                    <span class="emoji">🚀</span>
-                    <!-- 更多Unicode Emoji -->
+                <!-- 标题 -->
+                <div class="form-group mb-3">
+                    <label for="title" class="form-label">
+                        <i class="fas fa-heading"></i> 标题
+                    </label>
+                    <input type="text" class="form-control" id="title" name="title" placeholder="输入帖子标题" required>
                 </div>
+
+                <!-- 版块选择 -->
+                <div class="form-group mb-3">
+                    <label for="section_id" class="form-label">
+                        <i class="fas fa-folder"></i> 选择版块
+                    </label>
+                    <select class="form-control" id="section_id" name="section_id">
+                        <option value="">-- 请选择版块 --</option>
+                        {% for section in sections %}
+                        <option value="{{ section.id }}">{{ section.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <small class="text-muted">选择一个适合您话题的版块</small>
+                </div>
+
+                <!-- 内容 -->
+                <div class="form-group mb-3">
+                    <label for="content" class="form-label">
+                        <i class="fas fa-pencil-alt"></i> 内容（支持 Markdown 格式）
+                    </label>
+                    <div class="input-group">
+                        <textarea class="form-control" id="content" name="content" rows="10" placeholder="输入帖子内容"
+                            required></textarea>
+                        <span class="input-group-text emoji-button" id="emojiButton" title="添加表情">
+                            <i class="fas fa-smile"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- 提交按钮 -->
+                <div class="text-right">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i> 发布主题
+                    </button>
+                </div>
+            </form>
+
+            <!-- Emoji 弹出框 -->
+            <div id="emojiPopup" class="emoji-popup">
+                <span class="emoji">😀</span>
+                <span class="emoji">😎</span>
+                <span class="emoji">👍</span>
+                <span class="emoji">❤️</span>
+                <span class="emoji">🚀</span>
+                <span class="emoji">🎉</span>
+                <span class="emoji">🔥</span>
+                <span class="emoji">💯</span>
+                <span class="emoji">🤔</span>
+                <span class="emoji">😊</span>
+                <span class="emoji">👏</span>
+                <span class="emoji">🙏</span>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .create-post-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .card {
+        box-shadow: var(--shadow-sm);
+        border-radius: var(--border-radius-lg);
+        border: none;
+    }
+    
+    .card-header {
+        background-color: var(--background-secondary);
+        border-bottom: 1px solid var(--border-color);
+        padding: 1.5rem;
+    }
+    
+    .card-header h3 {
+        margin: 0;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+    
+    .card-body {
+        padding: 2rem;
+    }
+    
+    .form-label {
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        color: var(--text-primary);
+    }
+    
+    .form-control {
+        border: 1px solid var(--border-color);
+        background-color: var(--background-secondary);
+        border-radius: var(--border-radius);
+        padding: 0.75rem;
+        transition: var(--transition-base);
+    }
+    
+    .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(94, 114, 228, 0.25);
+    }
+    
+    .emoji-button {
+        cursor: pointer;
+        background-color: var(--background-tertiary);
+        border: none;
+    }
+    
+    .emoji-popup {
+        display: none;
+        position: absolute;
+        background: white;
+        border: 1px solid var(--border-color);
+        padding: 1rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-md);
+        z-index: 1000;
+        width: 250px;
+    }
+    
+    .emoji {
+        font-size: 1.5rem;
+        cursor: pointer;
+        margin: 0.25rem;
+        display: inline-block;
+        transition: transform 0.2s;
+    }
+    
+    .emoji:hover {
+        transform: scale(1.2);
+    }
+</style>
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/emoji_interact.js') }}"></script>
-
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const emojiButton = document.getElementById('emojiButton');
+        const emojiPopup = document.getElementById('emojiPopup');
+        const contentTextarea = document.getElementById('content');
+        const emojis = document.querySelectorAll('.emoji');
+        
+        // 点击表情按钮显示/隐藏表情选择框
+        emojiButton.addEventListener('click', function() {
+            if (emojiPopup.style.display === 'none' || emojiPopup.style.display === '') {
+                const buttonRect = emojiButton.getBoundingClientRect();
+                emojiPopup.style.display = 'block';
+                emojiPopup.style.top = buttonRect.top + 'px';
+                emojiPopup.style.left = buttonRect.left - 250 + 'px';
+            } else {
+                emojiPopup.style.display = 'none';
+            }
+        });
+        
+        // 点击表情将其插入内容中
+        emojis.forEach(function(emoji) {
+            emoji.addEventListener('click', function() {
+                const cursorPos = contentTextarea.selectionStart;
+                const textBefore = contentTextarea.value.substring(0, cursorPos);
+                const textAfter = contentTextarea.value.substring(cursorPos);
+                
+                contentTextarea.value = textBefore + emoji.innerText + textAfter;
+                contentTextarea.focus();
+                contentTextarea.selectionStart = cursorPos + emoji.innerText.length;
+                contentTextarea.selectionEnd = cursorPos + emoji.innerText.length;
+                
+                emojiPopup.style.display = 'none';
+            });
+        });
+        
+        // 点击页面其他地方关闭表情选择框
+        document.addEventListener('click', function(event) {
+            if (!emojiButton.contains(event.target) && !emojiPopup.contains(event.target)) {
+                emojiPopup.style.display = 'none';
+            }
+        });
+    });
+</script>
 {% endblock %}

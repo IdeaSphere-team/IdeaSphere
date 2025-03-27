@@ -1,0 +1,396 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="analytics-container">
+    <div class="analytics-header">
+        <h2>版块数据分析</h2>
+        <div class="header-actions">
+            <a href="{{ url_for('sections') }}" class="btn-outline">
+                <i class="fas fa-arrow-left"></i> 返回版块列表
+            </a>
+        </div>
+    </div>
+
+    <div class="analytics-grid">
+        <!-- 版块帖子数量排行 -->
+        <div class="analytics-card">
+            <div class="card-header">
+                <h3><i class="fas fa-chart-bar"></i> 版块活跃度排名</h3>
+            </div>
+            <div class="card-body">
+                {% if section_post_counts %}
+                <div class="rank-list">
+                    {% for section in section_post_counts %}
+                    <div class="rank-item">
+                        <div class="rank-info">
+                            <span class="rank-number">{{ loop.index }}</span>
+                            <div class="rank-icon"><i class="{{ section.icon }}"></i></div>
+                            <div class="rank-name">{{ section.name }}</div>
+                        </div>
+                        <div class="rank-value">{{ section.post_count }} 帖子</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="no-data">
+                    <i class="fas fa-chart-bar"></i>
+                    <p>暂无版块数据</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 每日新增帖子趋势 -->
+        <div class="analytics-card">
+            <div class="card-header">
+                <h3><i class="fas fa-chart-line"></i> 近7天发帖趋势</h3>
+            </div>
+            <div class="card-body">
+                {% if daily_post_counts %}
+                <div class="chart-container">
+                    <div class="chart-bars">
+                        {% for day_data in daily_post_counts %}
+                        <div class="chart-bar">
+                            <div class="bar-wrapper">
+                                <div class="bar" style="height: {{ (day_data.count / daily_post_counts|map(attribute='count')|max * 100) if daily_post_counts|map(attribute='count')|max > 0 else 0 }}%">
+                                    <span class="bar-value">{{ day_data.count }}</span>
+                                </div>
+                            </div>
+                            <div class="bar-label">{{ day_data.date }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="no-data">
+                    <i class="fas fa-chart-line"></i>
+                    <p>暂无趋势数据</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 版块活跃用户 -->
+    <div class="analytics-card active-users-card">
+        <div class="card-header">
+            <h3><i class="fas fa-users"></i> 版块活跃用户</h3>
+        </div>
+        <div class="card-body">
+            {% if section_active_users %}
+            <div class="users-grid">
+                {% for section in section_post_counts %}
+                <div class="section-users">
+                    <div class="section-users-header">
+                        <i class="{{ section.icon }}"></i> {{ section.name }}
+                    </div>
+                    <div class="users-list">
+                        {% if section_active_users[section.id] %}
+                            {% for user in section_active_users[section.id] %}
+                            <div class="user-item">
+                                <div class="user-rank">{{ loop.index }}</div>
+                                <div class="user-info">
+                                    <div class="user-name">{{ user.username }}</div>
+                                    <div class="user-posts">{{ user.post_count }} 帖子</div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="no-users">暂无活跃用户</div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="no-data">
+                <i class="fas fa-users"></i>
+                <p>暂无用户数据</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.analytics-container {
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.analytics-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.analytics-header h2 {
+    margin: 0;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.btn-outline {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    background-color: transparent;
+    border: 1px solid var(--border-color);
+    text-decoration: none;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius);
+    transition: var(--transition-base);
+}
+
+.btn-outline:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.analytics-card {
+    background: white;
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+.card-header {
+    background-color: var(--background-secondary);
+    border-bottom: 1px solid var(--border-color);
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.card-header h3 {
+    margin: 0;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.rank-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.rank-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background-color: var(--background-primary);
+    border-radius: var(--border-radius);
+    transition: var(--transition-base);
+}
+
+.rank-item:hover {
+    background-color: var(--background-secondary);
+}
+
+.rank-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.rank-number {
+    font-weight: 600;
+    color: var(--text-secondary);
+    min-width: 20px;
+}
+
+.rank-icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: var(--border-radius);
+}
+
+.rank-name {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.rank-value {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.chart-container {
+    height: 250px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.chart-bars {
+    display: flex;
+    justify-content: space-between;
+    height: 200px;
+    align-items: flex-end;
+    gap: 10px;
+}
+
+.chart-bar {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.bar-wrapper {
+    width: 100%;
+    height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.bar {
+    background-color: var(--primary-color);
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+    min-height: 10px;
+    width: 100%;
+    position: relative;
+    transition: var(--transition-base);
+}
+
+.bar:hover {
+    background-color: var(--secondary-color);
+}
+
+.bar-value {
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.bar-label {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.active-users-card {
+    grid-column: 1 / -1;
+}
+
+.users-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+}
+
+.section-users {
+    background: var(--background-primary);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+.section-users-header {
+    background: var(--background-secondary);
+    padding: 0.75rem 1rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.users-list {
+    padding: 1rem;
+}
+
+.user-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.user-item:last-child {
+    border-bottom: none;
+}
+
+.user-rank {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--background-tertiary);
+    color: var(--text-secondary);
+    border-radius: 50%;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.user-info {
+    flex: 1;
+}
+
+.user-name {
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.user-posts {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.no-users {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: 1rem 0;
+}
+
+.no-data {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 0;
+    color: var(--text-muted);
+}
+
+.no-data i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.no-data p {
+    font-size: 1.1rem;
+}
+</style>
+{% endblock %} 

@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="sections-page">
+    <div class="section-header">
+        <h2>论坛版块</h2>
+        <div class="section-actions">
+            {% if g.role == 'admin' %}
+            <a href="{{ url_for('section_analytics') }}" class="btn-analytics">
+                <i class="fas fa-chart-bar"></i> 版块分析
+            </a>
+            <a href="{{ url_for('create_section') }}" class="btn-create-section">
+                <i class="fas fa-plus"></i> 新增版块
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="sections-list">
+        {% for section in sections %}
+        <div class="section-card">
+            <a href="{{ url_for('section_detail', section_id=section.id) }}" class="section-card-link"></a>
+            <div class="section-icon">
+                <i class="{{ section.icon }}"></i>
+            </div>
+            <div class="section-info">
+                <h3>{{ section.name }}</h3>
+                <div class="section-stats">
+                    <span><i class="fas fa-file-alt"></i> {{ section.post_count }}</span>
+                    <span><i class="fas fa-comment"></i> {{ section.comment_count }}</span>
+                </div>
+                <p class="section-desc">{{ section.description }}</p>
+            </div>
+            <a href="{{ url_for('section_detail', section_id=section.id) }}" class="section-link">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            
+            {% if g.role == 'admin' %}
+            <div class="section-admin-actions">
+                <a href="{{ url_for('edit_section', section_id=section.id) }}" class="btn-action edit-action" title="编辑版块">
+                    <i class="fas fa-edit"></i>
+                </a>
+                <button class="btn-action delete-action" title="删除版块" 
+                        onclick="confirmDeleteSection({{ section.id }}, '{{ section.name }}')">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="no-sections">
+            <i class="fas fa-folder-open"></i>
+            <p>暂无版块，请管理员添加版块。</p>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<style>
+.sections-page {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.section-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.btn-analytics {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: white;
+    background-color: var(--info-color);
+    text-decoration: none;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius);
+    transition: var(--transition-base);
+}
+
+.btn-analytics:hover {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.btn-create-section {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: white;
+    background-color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius);
+    transition: var(--transition-base);
+}
+
+.btn-create-section:hover {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.sections-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.section-card {
+    display: flex;
+    align-items: center;
+    background-color: white;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: 1.5rem;
+    transition: var(--transition-base);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.section-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.section-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1.5rem;
+    flex-shrink: 0;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.section-info {
+    flex: 1;
+}
+
+.section-info h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.25rem;
+    color: var(--text-primary);
+}
+
+.section-stats {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.section-stats span {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.section-desc {
+    color: var(--text-secondary);
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+.section-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: var(--transition-base);
+    margin-left: 1rem;
+}
+
+.section-link:hover {
+    color: var(--primary-color);
+    background-color: var(--background-secondary);
+}
+
+.section-card-link {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+.section-admin-actions {
+    position: relative;
+    z-index: 2;
+}
+
+.btn-action {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    transition: var(--transition-base);
+}
+
+.edit-action {
+    background-color: var(--info-color);
+    color: white;
+}
+
+.delete-action {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+.btn-action:hover {
+    opacity: 0.8;
+}
+
+.no-sections {
+    text-align: center;
+    padding: 3rem;
+    background: white;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.no-sections i {
+    font-size: 3rem;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+}
+
+.no-sections p {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+}
+</style>
+
+{% if g.role == 'admin' %}
+<script>
+    function confirmDeleteSection(sectionId, sectionName) {
+        if (confirm(`确定要删除版块"${sectionName}"吗？此操作不可恢复。`)) {
+            // 创建一个表单并提交
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/admin/delete_section/${sectionId}`;
+            
+            // 添加CSRF令牌
+            const csrfToken = document.createElement('input');
+            csrfToken.type = 'hidden';
+            csrfToken.name = 'csrf_token';
+            csrfToken.value = '{{ csrf_token() }}';
+            form.appendChild(csrfToken);
+            
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,67 @@
+.active-users {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+}
+
+.user-tag {
+    background-color: var(--background-secondary);
+    border-radius: 30px;
+    padding: 0.5rem 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    transition: var(--transition-base);
+    cursor: pointer;
+}
+
+.user-tag:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.user-tag img {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.user-tag i {
+    font-size: 1rem;
+}
+
+.user-tag span {
+    font-weight: 500;
+}
+
+.badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 500;
+    padding: 0.15rem 0.5rem;
+    border-radius: 10px;
+    background-color: var(--secondary-color);
+    color: white;
+    margin-left: 0.5rem;
+}
+
+@media (max-width: 576px) {
+    .active-users {
+        gap: 0.5rem;
+    }
+    
+    .user-tag {
+        padding: 0.375rem 0.625rem;
+        font-size: 0.8rem;
+    }
+    
+    .user-tag img, .user-tag i {
+        width: 20px;
+        height: 20px;
+        font-size: 0.875rem;
+    }
+} 

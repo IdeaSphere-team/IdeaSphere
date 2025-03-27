@@ -1,0 +1,434 @@
+{% extends "admin/base.html" %}
+
+{% block title %}网站设置 - 管理面板{% endblock %}
+
+{% block header %}
+<div class="admin-header">
+    <h1 class="admin-title">网站设置</h1>
+    <p class="admin-subtitle">配置网站的核心参数和功能</p>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="settings-nav">
+                <ul class="nav nav-tabs flex-column" id="settingsTabs" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="site-info-tab" data-toggle="tab" href="#site-info" role="tab">
+                            <i class="fas fa-info-circle"></i> 网站信息
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="function-tab" data-toggle="tab" href="#function" role="tab">
+                            <i class="fas fa-toggle-on"></i> 功能设置
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="security-tab" data-toggle="tab" href="#security" role="tab">
+                            <i class="fas fa-shield-alt"></i> 安全设置
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="upload-tab" data-toggle="tab" href="#upload" role="tab">
+                            <i class="fas fa-upload"></i> 上传设置
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="col-md-9">
+            <div class="tab-content" id="settingsTabContent">
+                <!-- 网站信息设置 -->
+                <div class="tab-pane fade show active" id="site-info" role="tabpanel">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-info-circle"></i> 网站基本信息</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="siteInfoForm">
+                                <div class="form-group">
+                                    <label for="site_name">网站名称</label>
+                                    <input type="text" class="form-control" id="site_name" name="site_name" 
+                                           value="{{ settings.get('site_name', '') }}" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="site_description">网站描述</label>
+                                    <textarea class="form-control" id="site_description" name="site_description" 
+                                              rows="3">{{ settings.get('site_description', '') }}</textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="site_keywords">SEO关键词</label>
+                                    <input type="text" class="form-control" id="site_keywords" name="site_keywords" 
+                                           value="{{ settings.get('site_keywords', '') }}" 
+                                           placeholder="关键词之间用逗号分隔">
+                                </div>
+                                <div class="form-group">
+                                    <label for="site_footer">网站页脚信息</label>
+                                    <textarea class="form-control" id="site_footer" name="site_footer" 
+                                              rows="3">{{ settings.get('site_footer', '') }}</textarea>
+                                    <small class="form-text text-muted">支持HTML，如版权信息、备案号等</small>
+                                </div>
+                                <button type="submit" class="btn btn-primary">保存设置</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 功能设置 -->
+                <div class="tab-pane fade" id="function" role="tabpanel">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-toggle-on"></i> 网站功能开关</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="functionSettingsForm">
+                                <div class="custom-control custom-switch mb-3">
+                                    <input type="checkbox" class="custom-control-input" id="enable_registration" 
+                                           name="enable_registration" 
+                                           {% if settings.get('enable_registration') == 'true' %}checked{% endif %}>
+                                    <label class="custom-control-label" for="enable_registration">允许新用户注册</label>
+                                </div>
+                                <div class="custom-control custom-switch mb-3">
+                                    <input type="checkbox" class="custom-control-input" id="enable_email_verification" 
+                                           name="enable_email_verification" 
+                                           {% if settings.get('enable_email_verification') == 'true' %}checked{% endif %}>
+                                    <label class="custom-control-label" for="enable_email_verification">启用邮箱验证</label>
+                                </div>
+                                <div class="custom-control custom-switch mb-3">
+                                    <input type="checkbox" class="custom-control-input" id="enable_comments" 
+                                           name="enable_comments" 
+                                           {% if settings.get('enable_comments') == 'true' %}checked{% endif %}>
+                                    <label class="custom-control-label" for="enable_comments">允许评论功能</label>
+                                </div>
+                                <div class="custom-control custom-switch mb-3">
+                                    <input type="checkbox" class="custom-control-input" id="enable_reports" 
+                                           name="enable_reports" 
+                                           {% if settings.get('enable_reports') == 'true' %}checked{% endif %}>
+                                    <label class="custom-control-label" for="enable_reports">允许举报功能</label>
+                                </div>
+                                <div class="form-group">
+                                    <label for="posts_per_page">每页显示帖子数</label>
+                                    <input type="number" class="form-control" id="posts_per_page" name="posts_per_page" 
+                                           value="{{ settings.get('posts_per_page', '10') }}" min="5" max="50">
+                                </div>
+                                <button type="submit" class="btn btn-primary">保存设置</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 安全设置 -->
+                <div class="tab-pane fade" id="security" role="tabpanel">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-shield-alt"></i> 安全配置</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="securitySettingsForm">
+                                <div class="form-group">
+                                    <label for="session_timeout">会话超时时间（分钟）</label>
+                                    <input type="number" class="form-control" id="session_timeout" name="session_timeout" 
+                                           value="{{ settings.get('session_timeout', '30') }}" min="5" max="1440">
+                                </div>
+                                <div class="form-group">
+                                    <label for="max_login_attempts">最大登录尝试次数</label>
+                                    <input type="number" class="form-control" id="max_login_attempts" 
+                                           name="max_login_attempts" 
+                                           value="{{ settings.get('max_login_attempts', '5') }}" min="3" max="10">
+                                    <small class="form-text text-muted">超过此次数后账户将被暂时锁定</small>
+                                </div>
+                                <div class="form-group">
+                                    <label for="lockout_time">账户锁定时间（分钟）</label>
+                                    <input type="number" class="form-control" id="lockout_time" name="lockout_time" 
+                                           value="{{ settings.get('lockout_time', '30') }}" min="5" max="1440">
+                                </div>
+                                <div class="custom-control custom-switch mb-3">
+                                    <input type="checkbox" class="custom-control-input" id="require_strong_password" 
+                                           name="require_strong_password" 
+                                           {% if settings.get('require_strong_password') == 'true' %}checked{% endif %}>
+                                    <label class="custom-control-label" for="require_strong_password">要求使用强密码</label>
+                                    <small class="form-text text-muted">至少8位，包含大小写字母、数字和特殊字符</small>
+                                </div>
+                                <button type="submit" class="btn btn-primary">保存设置</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 上传设置 -->
+                <div class="tab-pane fade" id="upload" role="tabpanel">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-upload"></i> 网站Logo与图标</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="logoForm" enctype="multipart/form-data">
+                                <div class="form-group">
+                                    <label>当前Logo</label>
+                                    <div class="current-logo mb-2">
+                                        <img src="{{ url_for('static', filename='images/logo.png') }}?v={{ settings.get('logo_version', '1') }}" 
+                                             alt="网站Logo" style="max-height: 100px;">
+                                    </div>
+                                    <div class="custom-file">
+                                        <input type="file" class="custom-file-input" id="logo_file" name="logo_file" accept="image/*">
+                                        <label class="custom-file-label" for="logo_file">选择新Logo</label>
+                                    </div>
+                                    <small class="form-text text-muted">推荐尺寸：200px × 60px，格式：PNG/JPG/SVG</small>
+                                </div>
+                                <button type="submit" class="btn btn-primary">上传Logo</button>
+                            </form>
+                            
+                            <hr class="my-4">
+                            
+                            <form id="faviconForm" enctype="multipart/form-data">
+                                <div class="form-group">
+                                    <label>当前Favicon</label>
+                                    <div class="current-favicon mb-2">
+                                        <img src="{{ url_for('static', filename='images/favicon.ico') }}?v={{ settings.get('favicon_version', '1') }}" 
+                                             alt="网站Favicon" style="max-height: 32px;">
+                                    </div>
+                                    <div class="custom-file">
+                                        <input type="file" class="custom-file-input" id="favicon_file" name="favicon_file" 
+                                               accept="image/x-icon,image/png">
+                                        <label class="custom-file-label" for="favicon_file">选择新Favicon</label>
+                                    </div>
+                                    <small class="form-text text-muted">推荐尺寸：32px × 32px，格式：ICO/PNG</small>
+                                </div>
+                                <button type="submit" class="btn btn-primary">上传Favicon</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // 表单文件选择显示文件名
+    $('.custom-file-input').on('change', function() {
+        var fileName = $(this).val().split('\\').pop();
+        $(this).next('.custom-file-label').html(fileName);
+    });
+    
+    // 网站信息表单提交
+    $('#siteInfoForm').on('submit', function(e) {
+        e.preventDefault();
+        var formData = {
+            site_name: $('#site_name').val(),
+            site_description: $('#site_description').val(),
+            site_keywords: $('#site_keywords').val(),
+            site_footer: $('#site_footer').val()
+        };
+        
+        $.ajax({
+            url: '/api/admin/save_site_info',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(formData),
+            success: function(response) {
+                if (response.success) {
+                    showToast('success', '网站信息保存成功');
+                } else {
+                    showToast('error', '保存失败: ' + response.message);
+                }
+            },
+            error: function() {
+                showToast('error', '网络错误，请稍后重试');
+            }
+        });
+    });
+    
+    // 功能设置表单提交
+    $('#functionSettingsForm').on('submit', function(e) {
+        e.preventDefault();
+        var formData = {
+            enable_registration: $('#enable_registration').is(':checked') ? 'true' : 'false',
+            enable_email_verification: $('#enable_email_verification').is(':checked') ? 'true' : 'false',
+            enable_comments: $('#enable_comments').is(':checked') ? 'true' : 'false',
+            enable_reports: $('#enable_reports').is(':checked') ? 'true' : 'false',
+            posts_per_page: $('#posts_per_page').val()
+        };
+        
+        $.ajax({
+            url: '/api/admin/save_function_settings',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(formData),
+            success: function(response) {
+                if (response.success) {
+                    showToast('success', '功能设置保存成功');
+                } else {
+                    showToast('error', '保存失败: ' + response.message);
+                }
+            },
+            error: function() {
+                showToast('error', '网络错误，请稍后重试');
+            }
+        });
+    });
+    
+    // 安全设置表单提交
+    $('#securitySettingsForm').on('submit', function(e) {
+        e.preventDefault();
+        var formData = {
+            session_timeout: $('#session_timeout').val(),
+            max_login_attempts: $('#max_login_attempts').val(),
+            lockout_time: $('#lockout_time').val(),
+            require_strong_password: $('#require_strong_password').is(':checked') ? 'true' : 'false'
+        };
+        
+        $.ajax({
+            url: '/api/admin/save_security_settings',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(formData),
+            success: function(response) {
+                if (response.success) {
+                    showToast('success', '安全设置保存成功');
+                } else {
+                    showToast('error', '保存失败: ' + response.message);
+                }
+            },
+            error: function() {
+                showToast('error', '网络错误，请稍后重试');
+            }
+        });
+    });
+    
+    // Logo上传表单提交
+    $('#logoForm').on('submit', function(e) {
+        e.preventDefault();
+        var formData = new FormData(this);
+        
+        $.ajax({
+            url: '/api/admin/save_logo',
+            type: 'POST',
+            data: formData,
+            contentType: false,
+            processData: false,
+            success: function(response) {
+                if (response.success) {
+                    showToast('success', 'Logo上传成功');
+                    // 刷新Logo图片（添加随机参数避免缓存）
+                    $('.current-logo img').attr('src', $('.current-logo img').attr('src').split('?')[0] + '?v=' + new Date().getTime());
+                } else {
+                    showToast('error', '上传失败: ' + response.message);
+                }
+            },
+            error: function() {
+                showToast('error', '网络错误，请稍后重试');
+            }
+        });
+    });
+    
+    // Favicon上传表单提交
+    $('#faviconForm').on('submit', function(e) {
+        e.preventDefault();
+        var formData = new FormData(this);
+        
+        $.ajax({
+            url: '/api/admin/save_favicon',
+            type: 'POST',
+            data: formData,
+            contentType: false,
+            processData: false,
+            success: function(response) {
+                if (response.success) {
+                    showToast('success', 'Favicon上传成功');
+                    // 刷新Favicon图片（添加随机参数避免缓存）
+                    $('.current-favicon img').attr('src', $('.current-favicon img').attr('src').split('?')[0] + '?v=' + new Date().getTime());
+                } else {
+                    showToast('error', '上传失败: ' + response.message);
+                }
+            },
+            error: function() {
+                showToast('error', '网络错误，请稍后重试');
+            }
+        });
+    });
+    
+    // 显示提示消息
+    function showToast(type, message) {
+        var toastClass = type === 'success' ? 'bg-success' : 'bg-danger';
+        var toast = $('<div class="toast ' + toastClass + '" role="alert" aria-live="assertive" aria-atomic="true" data-delay="3000">' +
+                      '<div class="toast-header">' +
+                      '<strong class="mr-auto">' + (type === 'success' ? '成功' : '错误') + '</strong>' +
+                      '<button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">' +
+                      '<span aria-hidden="true">&times;</span></button>' +
+                      '</div>' +
+                      '<div class="toast-body text-white">' + message + '</div>' +
+                      '</div>');
+        
+        $('.toast-container').remove();
+        $('body').append($('<div class="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999;"></div>').append(toast));
+        toast.toast('show');
+    }
+});
+</script>
+
+<style>
+.settings-nav {
+    margin-bottom: 20px;
+}
+.settings-nav .nav-link {
+    border-radius: 0;
+    padding: 10px 15px;
+    color: #333;
+    border-left: 3px solid transparent;
+}
+.settings-nav .nav-link.active {
+    background-color: #f8f9fa;
+    border-left: 3px solid #007bff;
+    font-weight: bold;
+}
+.settings-nav .nav-link:hover:not(.active) {
+    background-color: #f8f9fa;
+    border-left: 3px solid #ddd;
+}
+.settings-nav .nav-link i {
+    margin-right: 8px;
+}
+.card {
+    margin-bottom: 20px;
+}
+.card-header {
+    background-color: #f8f9fa;
+}
+.card-header h5 {
+    margin-bottom: 0;
+}
+.card-header h5 i {
+    margin-right: 8px;
+}
+@media (max-width: 767.98px) {
+    .settings-nav .nav-tabs {
+        display: flex;
+        flex-direction: row;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+    .settings-nav .nav-item {
+        display: inline-block;
+    }
+    .settings-nav .nav-link {
+        border-left: none;
+        border-bottom: 3px solid transparent;
+    }
+    .settings-nav .nav-link.active {
+        border-left: none;
+        border-bottom: 3px solid #007bff;
+    }
+    .settings-nav .nav-link:hover:not(.active) {
+        border-left: none;
+        border-bottom: 3px solid #ddd;
+    }
+}
+</style>
+{% endblock %} 

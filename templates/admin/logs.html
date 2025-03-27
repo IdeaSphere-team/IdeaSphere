@@ -1,0 +1,322 @@
+{% extends "admin/base.html" %}
+
+{% block title %}系统日志 - 管理面板{% endblock %}
+
+{% block header %}
+<div class="admin-header">
+    <h1 class="admin-title">系统日志</h1>
+    <p class="admin-subtitle">查看和管理系统操作记录</p>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="logs-container">
+    <!-- 过滤器和操作按钮 -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form id="logsFilterForm" class="mb-0">
+                <div class="row align-items-end">
+                    <div class="col-md-3 mb-3 mb-md-0">
+                        <label for="logLevel">日志级别</label>
+                        <select class="form-control" id="logLevel" name="level">
+                            <option value="">全部</option>
+                            <option value="info" {% if level == 'info' %}selected{% endif %}>信息</option>
+                            <option value="warning" {% if level == 'warning' %}selected{% endif %}>警告</option>
+                            <option value="error" {% if level == 'error' %}selected{% endif %}>错误</option>
+                            <option value="debug" {% if level == 'debug' %}selected{% endif %}>调试</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3 mb-md-0">
+                        <label for="startDate">开始日期</label>
+                        <input type="date" class="form-control" id="startDate" name="start_date" value="{{ start_date }}">
+                    </div>
+                    <div class="col-md-3 mb-3 mb-md-0">
+                        <label for="endDate">结束日期</label>
+                        <input type="date" class="form-control" id="endDate" name="end_date" value="{{ end_date }}">
+                    </div>
+                    <div class="col-md-3 text-md-right">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-filter"></i> 筛选
+                        </button>
+                        <button type="button" id="exportLogs" class="btn btn-outline-secondary ml-2">
+                            <i class="fas fa-download"></i> 导出
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 日志列表 -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-list"></i> 
+                日志列表
+                <span class="badge badge-primary ml-2">{{ log_count }}</span>
+            </h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th width="5%">ID</th>
+                        <th width="10%">级别</th>
+                        <th width="15%">来源</th>
+                        <th width="40%">消息</th>
+                        <th width="15%">时间</th>
+                        <th width="15%">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if logs %}
+                        {% for log in logs %}
+                        <tr>
+                            <td>{{ log.id }}</td>
+                            <td>
+                                <span class="badge {% if log.level == 'error' %}badge-danger{% elif log.level == 'warning' %}badge-warning{% elif log.level == 'info' %}badge-info{% else %}badge-secondary{% endif %}">
+                                    {{ log.level|upper }}
+                                </span>
+                            </td>
+                            <td>{{ log.source }}</td>
+                            <td class="log-message">{{ log.message }}</td>
+                            <td>{{ log.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-info view-log" data-id="{{ log.id }}">
+                                    <i class="fas fa-eye"></i> 详情
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4">
+                                <div class="empty-state">
+                                    <i class="fas fa-inbox fa-3x text-muted"></i>
+                                    <p class="mt-3">暂无符合条件的日志记录</p>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- 分页 -->
+        {% if pagination and pagination.pages|length > 1 %}
+        <div class="card-footer">
+            <nav>
+                <ul class="pagination justify-content-center mb-0">
+                    <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('admin_logs', page=pagination.prev_page, level=level, start_date=start_date, end_date=end_date) }}">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                    
+                    {% for p in pagination.pages %}
+                        <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('admin_logs', page=p, level=level, start_date=start_date, end_date=end_date) }}">
+                                {{ p }}
+                            </a>
+                        </li>
+                    {% endfor %}
+                    
+                    <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('admin_logs', page=pagination.next_page, level=level, start_date=start_date, end_date=end_date) }}">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 日志详情模态框 -->
+<div class="modal fade" id="logDetailModal" tabindex="-1" role="dialog" aria-labelledby="logDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="logDetailModalLabel">日志详情</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="log-detail-content">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>ID:</strong> <span id="detail-id"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>级别:</strong> <span id="detail-level" class="badge"></span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>来源:</strong> <span id="detail-source"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>时间:</strong> <span id="detail-time"></span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>用户:</strong> <span id="detail-user"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>IP地址:</strong> <span id="detail-ip"></span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <strong>消息:</strong>
+                        <p id="detail-message" class="p-2 bg-light rounded"></p>
+                    </div>
+                    <div id="stack-trace-container" class="mb-0">
+                        <strong>堆栈跟踪:</strong>
+                        <pre id="detail-stack-trace" class="p-3 bg-dark text-light rounded"></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // 日志详情查看
+    $('.view-log').on('click', function() {
+        const logId = $(this).data('id');
+        
+        // 发起AJAX请求获取日志详情
+        $.ajax({
+            url: '/api/admin/log_detail',
+            type: 'GET',
+            data: { log_id: logId },
+            success: function(response) {
+                if (response.success) {
+                    const log = response.data;
+                    
+                    // 填充模态框数据
+                    $('#detail-id').text(log.id);
+                    $('#detail-level')
+                        .text(log.level.toUpperCase())
+                        .removeClass('badge-danger badge-warning badge-info badge-secondary')
+                        .addClass(getLogLevelClass(log.level));
+                    $('#detail-source').text(log.source);
+                    $('#detail-time').text(log.created_at);
+                    $('#detail-user').text(log.user ? log.user.username : '系统');
+                    $('#detail-ip').text(log.ip_address || 'N/A');
+                    $('#detail-message').text(log.message);
+                    
+                    // 处理堆栈跟踪
+                    if (log.stack_trace) {
+                        $('#detail-stack-trace').text(log.stack_trace);
+                        $('#stack-trace-container').show();
+                    } else {
+                        $('#stack-trace-container').hide();
+                    }
+                    
+                    // 显示模态框
+                    $('#logDetailModal').modal('show');
+                } else {
+                    showToast('error', '获取日志详情失败: ' + response.message);
+                }
+            },
+            error: function() {
+                showToast('error', '网络错误，请稍后重试');
+            }
+        });
+    });
+    
+    // 导出日志
+    $('#exportLogs').on('click', function() {
+        const level = $('#logLevel').val();
+        const startDate = $('#startDate').val();
+        const endDate = $('#endDate').val();
+        
+        // 构建导出URL
+        let exportUrl = '/api/admin/export_logs?format=csv';
+        if (level) exportUrl += '&level=' + level;
+        if (startDate) exportUrl += '&start_date=' + startDate;
+        if (endDate) exportUrl += '&end_date=' + endDate;
+        
+        // 通过创建临时链接来触发下载
+        const link = document.createElement('a');
+        link.href = exportUrl;
+        link.download = 'system_logs.csv';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    });
+    
+    // 根据日志级别获取对应的Badge类
+    function getLogLevelClass(level) {
+        switch(level.toLowerCase()) {
+            case 'error': return 'badge-danger';
+            case 'warning': return 'badge-warning';
+            case 'info': return 'badge-info';
+            default: return 'badge-secondary';
+        }
+    }
+    
+    // 显示提示消息
+    function showToast(type, message) {
+        var toastClass = type === 'success' ? 'bg-success' : 'bg-danger';
+        var toast = $('<div class="toast ' + toastClass + '" role="alert" aria-live="assertive" aria-atomic="true" data-delay="3000">' +
+                      '<div class="toast-header">' +
+                      '<strong class="mr-auto">' + (type === 'success' ? '成功' : '错误') + '</strong>' +
+                      '<button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">' +
+                      '<span aria-hidden="true">&times;</span></button>' +
+                      '</div>' +
+                      '<div class="toast-body text-white">' + message + '</div>' +
+                      '</div>');
+        
+        $('.toast-container').remove();
+        $('body').append($('<div class="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999;"></div>').append(toast));
+        toast.toast('show');
+    }
+});
+</script>
+
+<style>
+.logs-container {
+    margin-bottom: 2rem;
+}
+.log-message {
+    max-width: 400px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem;
+    color: #6c757d;
+}
+.badge-info {
+    background-color: #17a2b8;
+}
+.badge-warning {
+    background-color: #ffc107;
+    color: #212529;
+}
+.badge-danger {
+    background-color: #dc3545;
+}
+#detail-stack-trace {
+    max-height: 300px;
+    overflow-y: auto;
+    font-size: 0.85rem;
+    white-space: pre-wrap;
+}
+</style>
+{% endblock %} 

@@ -1,0 +1,48 @@
+.welcome-banner {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 0.75rem 0;
+    text-align: center;
+}
+
+.welcome-banner .container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+.welcome-banner i {
+    font-size: 1.1rem;
+    animation: sparkle 1.5s infinite;
+}
+
+.welcome-banner span {
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+@keyframes sparkle {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(1.1);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@media (max-width: 768px) {
+    .welcome-banner span {
+        font-size: 0.85rem;
+    }
+    
+    .welcome-banner i {
+        font-size: 1rem;
+    }
+} 

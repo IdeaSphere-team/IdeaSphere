@@ -1,40 +1,1031 @@
-{% extends "admin_panel.html" %}
+{% extends "admin/base.html" %}
 
-{% block admin_content %}
-<div class="card">
-    <div class="card-header">
-        <h5 class="text-center">管理主题</h5>
+{% block title %}帖子管理 - IdeaSphere 管理后台{% endblock %}
+
+{% block header_title %}帖子管理{% endblock %}
+
+{% block content %}
+<div class="posts-container">
+    <!-- 搜索和筛选部分 -->
+    <div class="card filter-card">
+        <div class="card-body">
+            <div class="filters-wrap">
+                <div class="search-wrap">
+                    <form id="postSearchForm" class="search-form">
+                        <div class="search-input-wrap">
+                            <i class="fas fa-search search-icon"></i>
+                            <input type="text" class="search-input" placeholder="搜索帖子标题、作者名或内容..." id="postSearchInput">
+                            <button type="button" class="clear-search" id="clearSearch">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <button type="submit" class="btn btn-primary">搜索</button>
+                    </form>
+                </div>
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-filter="all">全部帖子</button>
+                    <button class="filter-btn" data-filter="pinned">置顶帖子</button>
+                    <button class="filter-btn" data-filter="recent">最近发布</button>
+                    <button class="filter-btn" data-filter="most-commented">评论最多</button>
+                    <button class="filter-btn" data-filter="deleted">已删除</button>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="card-body">
-        <table class="table table-hover">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>标题</th>
-                    <th>发布者</th>
-                    <th>回复数量</th>
-                    <th>操作</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for post in posts %}
-                <tr>
-                    <td>{{ post.id }}</td>
-                    <td>{{ post.title }}</td>
-                    <td>{{ post.author.username }}</td>
-                    <td>{{ post.comments | length }}</td>
-                    <td>
-                        <a href="{{ url_for('edit_post', post_id=post.id) }}" class="btn btn-primary btn-sm">
-                            <i class="fas fa-edit"></i> 编辑主题
-                        </a>
-                        <a href="{{ url_for('delete_post', post_id=post.id) }}" class="btn btn-danger btn-sm">
-                            <i class="fas fa-trash-alt"></i> 删除主题
-                        </a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    
+    <!-- 帖子列表 -->
+    <div class="card posts-card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h3 class="card-title">
+                <i class="fas fa-clipboard-list"></i>
+                全部帖子
+            </h3>
+            <div class="bulk-selection hidden" id="bulkActions">
+                <span class="selection-count">已选择 <span id="selectedCount">0</span> 项</span>
+                <div class="bulk-buttons">
+                    <button class="btn btn-sm btn-outline-primary" id="bulkPin">
+                        <i class="fas fa-thumbtack"></i> 批量置顶
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" id="bulkDelete">
+                        <i class="fas fa-trash"></i> 批量删除
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" id="cancelSelection">
+                        <i class="fas fa-times"></i> 取消选择
+                    </button>
+                </div>
+            </div>
+            <div class="posts-stats">
+                共 <span id="postsCount">384</span> 篇帖子
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="posts-table-wrapper">
+                <table class="posts-table">
+                    <thead>
+                        <tr>
+                            <th class="col-checkbox">
+                                <label class="checkbox-container">
+                                    <input type="checkbox" id="selectAll">
+                                    <span class="checkmark"></span>
+                                </label>
+                            </th>
+                            <th class="col-title">标题</th>
+                            <th class="col-author">作者</th>
+                            <th class="col-section">板块</th>
+                            <th class="col-date">发布时间</th>
+                            <th class="col-comments">评论</th>
+                            <th class="col-status">状态</th>
+                            <th class="col-actions">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- 示例帖子数据 -->
+                        <tr class="post-row">
+                            <td>
+                                <label class="checkbox-container">
+                                    <input type="checkbox" class="post-select" data-id="1">
+                                    <span class="checkmark"></span>
+                                </label>
+                            </td>
+                            <td class="post-title">
+                                <a href="/post/1" target="_blank">欢迎来到我们新的社区平台！</a>
+                                <span class="post-tag pinned">置顶</span>
+                            </td>
+                            <td class="post-author">admin</td>
+                            <td class="post-section">公告</td>
+                            <td class="post-date">2023-05-15</td>
+                            <td class="post-comments">42</td>
+                            <td class="post-status"><span class="status-badge active">正常</span></td>
+                            <td class="post-actions">
+                                <div class="action-buttons">
+                                    <a href="/post/1" class="btn-icon" title="查看">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="/edit_post/1" class="btn-icon" title="编辑">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button class="btn-icon delete-post" data-id="1" title="删除">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr class="post-row">
+                            <td>
+                                <label class="checkbox-container">
+                                    <input type="checkbox" class="post-select" data-id="2">
+                                    <span class="checkmark"></span>
+                                </label>
+                            </td>
+                            <td class="post-title">
+                                <a href="/post/2" target="_blank">如何有效提高编程效率？</a>
+                            </td>
+                            <td class="post-author">developer1</td>
+                            <td class="post-section">技术讨论</td>
+                            <td class="post-date">2023-05-14</td>
+                            <td class="post-comments">27</td>
+                            <td class="post-status"><span class="status-badge active">正常</span></td>
+                            <td class="post-actions">
+                                <div class="action-buttons">
+                                    <a href="/post/2" class="btn-icon" title="查看">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="/edit_post/2" class="btn-icon" title="编辑">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button class="btn-icon delete-post" data-id="2" title="删除">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr class="post-row">
+                            <td>
+                                <label class="checkbox-container">
+                                    <input type="checkbox" class="post-select" data-id="3">
+                                    <span class="checkmark"></span>
+                                </label>
+                            </td>
+                            <td class="post-title">
+                                <a href="/post/3" target="_blank">推荐几本最近看的技术书籍</a>
+                            </td>
+                            <td class="post-author">bookworm</td>
+                            <td class="post-section">分享</td>
+                            <td class="post-date">2023-05-12</td>
+                            <td class="post-comments">18</td>
+                            <td class="post-status"><span class="status-badge active">正常</span></td>
+                            <td class="post-actions">
+                                <div class="action-buttons">
+                                    <a href="/post/3" class="btn-icon" title="查看">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="/edit_post/3" class="btn-icon" title="编辑">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button class="btn-icon delete-post" data-id="3" title="删除">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr class="post-row deleted">
+                            <td>
+                                <label class="checkbox-container">
+                                    <input type="checkbox" class="post-select" data-id="4">
+                                    <span class="checkmark"></span>
+                                </label>
+                            </td>
+                            <td class="post-title">
+                                <a href="/post/4" target="_blank" class="deleted-title">这是一个已删除的帖子</a>
+                            </td>
+                            <td class="post-author">user123</td>
+                            <td class="post-section">问答</td>
+                            <td class="post-date">2023-05-10</td>
+                            <td class="post-comments">5</td>
+                            <td class="post-status"><span class="status-badge deleted">已删除</span></td>
+                            <td class="post-actions">
+                                <div class="action-buttons">
+                                    <a href="/post/4" class="btn-icon" title="查看">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <button class="btn-icon restore-post" data-id="4" title="恢复">
+                                        <i class="fas fa-undo"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr class="post-row">
+                            <td>
+                                <label class="checkbox-container">
+                                    <input type="checkbox" class="post-select" data-id="5">
+                                    <span class="checkmark"></span>
+                                </label>
+                            </td>
+                            <td class="post-title">
+                                <a href="/post/5" target="_blank">分享我的个人项目经验</a>
+                                <span class="post-tag hot">热门</span>
+                            </td>
+                            <td class="post-author">project_master</td>
+                            <td class="post-section">项目展示</td>
+                            <td class="post-date">2023-05-08</td>
+                            <td class="post-comments">56</td>
+                            <td class="post-status"><span class="status-badge active">正常</span></td>
+                            <td class="post-actions">
+                                <div class="action-buttons">
+                                    <a href="/post/5" class="btn-icon" title="查看">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="/edit_post/5" class="btn-icon" title="编辑">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button class="btn-icon delete-post" data-id="5" title="删除">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- 分页控件 -->
+            <div class="posts-pagination">
+                <div class="pagination-info">
+                    显示 1-20 / 384
+                </div>
+                <div class="pagination-controls">
+                    <button class="pagination-btn" disabled>
+                        <i class="fas fa-angle-double-left"></i>
+                    </button>
+                    <button class="pagination-btn" disabled>
+                        <i class="fas fa-angle-left"></i>
+                    </button>
+                    <div class="pagination-pages">
+                        <button class="page-btn active">1</button>
+                        <button class="page-btn">2</button>
+                        <button class="page-btn">3</button>
+                        <span class="page-ellipsis">...</span>
+                        <button class="page-btn">19</button>
+                    </div>
+                    <button class="pagination-btn">
+                        <i class="fas fa-angle-right"></i>
+                    </button>
+                    <button class="pagination-btn">
+                        <i class="fas fa-angle-double-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
+<!-- 删除确认模态框 -->
+<div class="confirm-modal" id="deleteModal">
+    <div class="modal-overlay"></div>
+    <div class="modal-container">
+        <div class="modal-header">
+            <h3 class="modal-title">确认删除</h3>
+            <button class="modal-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <p>确定要删除选中的帖子吗？此操作无法撤销。</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" id="cancelDelete">取消</button>
+            <button class="btn btn-danger" id="confirmDelete">确认删除</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* 帖子管理容器 */
+    .posts-container {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    /* 过滤卡片 */
+    .filter-card {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+    
+    .filters-wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .search-wrap {
+        width: 100%;
+    }
+    
+    .search-form {
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .search-input-wrap {
+        position: relative;
+        flex: 1;
+    }
+    
+    .search-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--gray-500);
+    }
+    
+    .search-input {
+        width: 100%;
+        padding: 0.625rem 2.5rem;
+        border: 1px solid var(--gray-300);
+        border-radius: var(--border-radius-md);
+        font-size: 0.875rem;
+    }
+    
+    .search-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(94, 114, 228, 0.1);
+    }
+    
+    .clear-search {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--gray-500);
+        cursor: pointer;
+        display: none;
+    }
+    
+    .clear-search.visible {
+        display: block;
+    }
+    
+    .filter-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+    
+    .filter-btn {
+        padding: 0.5rem 1rem;
+        border: 1px solid var(--gray-300);
+        border-radius: var(--border-radius-md);
+        background: var(--gray-100);
+        color: var(--gray-700);
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+    
+    .filter-btn:hover {
+        background: var(--gray-200);
+    }
+    
+    .filter-btn.active {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+    }
+    
+    /* 帖子表格 */
+    .posts-card {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+    }
+    
+    .bulk-selection {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .bulk-selection.hidden {
+        display: none;
+    }
+    
+    .selection-count {
+        font-size: 0.875rem;
+        color: var(--gray-600);
+    }
+    
+    .bulk-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .btn-sm {
+        padding: 0.35rem 0.75rem;
+        font-size: 0.75rem;
+    }
+    
+    .posts-stats {
+        font-size: 0.875rem;
+        color: var(--gray-600);
+    }
+    
+    .posts-table-wrapper {
+        overflow-x: auto;
+    }
+    
+    .posts-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .posts-table th {
+        background: var(--gray-50);
+        padding: 0.75rem 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--gray-600);
+        border-bottom: 1px solid var(--gray-200);
+        font-size: 0.875rem;
+    }
+    
+    .posts-table td {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--gray-100);
+        font-size: 0.875rem;
+    }
+    
+    .post-row {
+        transition: background 0.15s ease;
+    }
+    
+    .post-row:hover {
+        background: var(--gray-50);
+    }
+    
+    .post-row.deleted {
+        background: rgba(245, 54, 92, 0.05);
+    }
+    
+    .col-checkbox {
+        width: 40px;
+    }
+    
+    .col-title {
+        min-width: 300px;
+    }
+    
+    .col-author, .col-section {
+        width: 120px;
+    }
+    
+    .col-date, .col-comments {
+        width: 100px;
+    }
+    
+    .col-status {
+        width: 80px;
+    }
+    
+    .col-actions {
+        width: 120px;
+    }
+    
+    /* 复选框样式 */
+    .checkbox-container {
+        display: block;
+        position: relative;
+        padding-left: 25px;
+        cursor: pointer;
+        user-select: none;
+    }
+    
+    .checkbox-container input {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+        height: 0;
+        width: 0;
+    }
+    
+    .checkmark {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 18px;
+        width: 18px;
+        background-color: white;
+        border: 1px solid var(--gray-300);
+        border-radius: 3px;
+    }
+    
+    .checkbox-container:hover input ~ .checkmark {
+        border-color: var(--gray-400);
+    }
+    
+    .checkbox-container input:checked ~ .checkmark {
+        background-color: var(--primary);
+        border-color: var(--primary);
+    }
+    
+    .checkmark:after {
+        content: "";
+        position: absolute;
+        display: none;
+    }
+    
+    .checkbox-container input:checked ~ .checkmark:after {
+        display: block;
+    }
+    
+    .checkbox-container .checkmark:after {
+        left: 6px;
+        top: 2px;
+        width: 5px;
+        height: 10px;
+        border: solid white;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+    }
+    
+    /* 帖子标题和状态样式 */
+    .post-title {
+        font-weight: 500;
+        color: var(--gray-800);
+    }
+    
+    .post-title a {
+        color: var(--gray-800);
+        text-decoration: none;
+        transition: color 0.15s ease;
+    }
+    
+    .post-title a:hover {
+        color: var(--primary);
+    }
+    
+    .post-title a.deleted-title {
+        color: var(--gray-500);
+        text-decoration: line-through;
+    }
+    
+    .post-tag {
+        display: inline-block;
+        padding: 0.125rem 0.5rem;
+        margin-left: 0.5rem;
+        border-radius: var(--border-radius-sm);
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    
+    .post-tag.pinned {
+        background: rgba(94, 114, 228, 0.1);
+        color: var(--primary);
+    }
+    
+    .post-tag.hot {
+        background: rgba(251, 99, 64, 0.1);
+        color: rgb(251, 99, 64);
+    }
+    
+    .status-badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: var(--border-radius-md);
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-align: center;
+    }
+    
+    .status-badge.active {
+        background: rgba(45, 206, 137, 0.1);
+        color: rgb(45, 206, 137);
+    }
+    
+    .status-badge.deleted {
+        background: rgba(245, 54, 92, 0.1);
+        color: var(--danger);
+    }
+    
+    /* 按钮样式 */
+    .btn-icon {
+        background: none;
+        border: none;
+        color: var(--gray-500);
+        cursor: pointer;
+        padding: 0.25rem;
+        margin: 0 0.125rem;
+        border-radius: var(--border-radius-sm);
+        transition: all 0.15s ease;
+    }
+    
+    .btn-icon:hover {
+        color: var(--primary);
+        background: rgba(94, 114, 228, 0.1);
+    }
+    
+    .action-buttons {
+        display: flex;
+        justify-content: center;
+    }
+    
+    /* 分页样式 */
+    .posts-pagination {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem;
+        border-top: 1px solid var(--gray-200);
+        background: var(--gray-50);
+    }
+    
+    .pagination-info {
+        font-size: 0.875rem;
+        color: var(--gray-600);
+    }
+    
+    .pagination-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .pagination-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        border: 1px solid var(--gray-300);
+        border-radius: var(--border-radius-md);
+        background: white;
+        color: var(--gray-700);
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+    
+    .pagination-btn:hover:not(:disabled) {
+        background: var(--gray-100);
+        border-color: var(--gray-400);
+    }
+    
+    .pagination-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .pagination-pages {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        margin: 0 0.25rem;
+    }
+    
+    .page-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        border: 1px solid var(--gray-300);
+        border-radius: var(--border-radius-md);
+        background: white;
+        color: var(--gray-700);
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+    
+    .page-btn:hover:not(.active) {
+        background: var(--gray-100);
+    }
+    
+    .page-btn.active {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+        cursor: default;
+    }
+    
+    .page-ellipsis {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 2rem;
+        padding: 0 0.5rem;
+        color: var(--gray-500);
+    }
+    
+    /* 确认模态框 */
+    .confirm-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1050;
+    }
+    
+    .confirm-modal.show {
+        display: block;
+    }
+    
+    .modal-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(2px);
+    }
+    
+    .modal-container {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 90%;
+        max-width: 450px;
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        overflow: hidden;
+    }
+    
+    .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--gray-200);
+    }
+    
+    .modal-title {
+        margin: 0;
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--gray-800);
+    }
+    
+    .modal-close {
+        background: none;
+        border: none;
+        color: var(--gray-500);
+        cursor: pointer;
+        font-size: 1.125rem;
+        transition: color 0.15s ease;
+    }
+    
+    .modal-close:hover {
+        color: var(--gray-700);
+    }
+    
+    .modal-body {
+        padding: 1.5rem;
+    }
+    
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+        padding: 1rem 1.5rem;
+        border-top: 1px solid var(--gray-200);
+        background: var(--gray-50);
+    }
+    
+    .btn-secondary {
+        background: white;
+        border: 1px solid var(--gray-300);
+        color: var(--gray-700);
+    }
+    
+    .btn-secondary:hover {
+        background: var(--gray-100);
+    }
+    
+    .btn-danger {
+        background: var(--danger);
+        border: 1px solid var(--danger);
+        color: white;
+    }
+    
+    .btn-danger:hover {
+        background: rgb(224, 36, 74);
+    }
+    
+    /* 响应式调整 */
+    @media (max-width: 768px) {
+        .search-form {
+            flex-direction: column;
+        }
+        
+        .col-author, .col-section, .col-date {
+            display: none;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 搜索框处理
+        const searchInput = document.getElementById('postSearchInput');
+        const clearSearchBtn = document.getElementById('clearSearch');
+        
+        if (searchInput && clearSearchBtn) {
+            // 显示/隐藏清除按钮
+            searchInput.addEventListener('input', function() {
+                if (this.value.length > 0) {
+                    clearSearchBtn.classList.add('visible');
+                } else {
+                    clearSearchBtn.classList.remove('visible');
+                }
+            });
+            
+            // 清除搜索
+            clearSearchBtn.addEventListener('click', function() {
+                searchInput.value = '';
+                this.classList.remove('visible');
+                // 这里可以触发搜索表单提交，重置结果
+                document.getElementById('postSearchForm').dispatchEvent(new Event('submit'));
+            });
+            
+            // 搜索表单提交
+            document.getElementById('postSearchForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const query = searchInput.value.trim();
+                console.log('搜索帖子:', query);
+                // 这里应该添加AJAX请求或页面跳转逻辑
+            });
+        }
+        
+        // 切换过滤器
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        if (filterButtons.length > 0) {
+            filterButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    filterButtons.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const filter = this.dataset.filter;
+                    console.log('切换到过滤器:', filter);
+                    // 这里应该添加过滤逻辑
+                });
+            });
+        }
+        
+        // 全选/取消全选
+        const selectAllCheckbox = document.getElementById('selectAll');
+        const postCheckboxes = document.querySelectorAll('.post-select');
+        const bulkActions = document.getElementById('bulkActions');
+        const selectedCountSpan = document.getElementById('selectedCount');
+        
+        if (selectAllCheckbox && postCheckboxes.length > 0) {
+            selectAllCheckbox.addEventListener('change', function() {
+                const isChecked = this.checked;
+                postCheckboxes.forEach(checkbox => {
+                    checkbox.checked = isChecked;
+                });
+                
+                // 更新已选择数量和显示批量操作栏
+                updateSelectionCount();
+            });
+            
+            // 单个帖子选择状态变化
+            postCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    updateSelectionCount();
+                    
+                    // 检查是否所有帖子都被选中，如果是，则选中"全选"框
+                    const allChecked = Array.from(postCheckboxes).every(cb => cb.checked);
+                    selectAllCheckbox.checked = allChecked;
+                });
+            });
+            
+            // 取消选择按钮
+            document.getElementById('cancelSelection').addEventListener('click', function() {
+                selectAllCheckbox.checked = false;
+                postCheckboxes.forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+                updateSelectionCount();
+            });
+        }
+        
+        // 更新选择计数并控制批量操作区域显示
+        function updateSelectionCount() {
+            const checkedCount = document.querySelectorAll('.post-select:checked').length;
+            selectedCountSpan.textContent = checkedCount;
+            
+            if (checkedCount > 0) {
+                bulkActions.classList.remove('hidden');
+                document.querySelector('.posts-stats').classList.add('hidden');
+            } else {
+                bulkActions.classList.add('hidden');
+                document.querySelector('.posts-stats').classList.remove('hidden');
+            }
+        }
+        
+        // 批量操作按钮
+        const bulkPinBtn = document.getElementById('bulkPin');
+        const bulkDeleteBtn = document.getElementById('bulkDelete');
+        
+        if (bulkPinBtn) {
+            bulkPinBtn.addEventListener('click', function() {
+                const selectedIds = getSelectedPostIds();
+                console.log('批量置顶帖子:', selectedIds);
+                // 这里应该添加批量置顶的AJAX请求
+            });
+        }
+        
+        if (bulkDeleteBtn) {
+            bulkDeleteBtn.addEventListener('click', function() {
+                const selectedIds = getSelectedPostIds();
+                
+                // 显示确认对话框
+                const deleteModal = document.getElementById('deleteModal');
+                if (deleteModal) {
+                    deleteModal.classList.add('show');
+                }
+            });
+        }
+        
+        // 确认删除对话框
+        const deleteModal = document.getElementById('deleteModal');
+        const cancelDeleteBtn = document.getElementById('cancelDelete');
+        const confirmDeleteBtn = document.getElementById('confirmDelete');
+        const modalCloseBtn = document.querySelector('.modal-close');
+        const modalOverlay = document.querySelector('.modal-overlay');
+        
+        if (deleteModal) {
+            // 关闭模态框
+            function closeModal() {
+                deleteModal.classList.remove('show');
+            }
+            
+            if (cancelDeleteBtn) {
+                cancelDeleteBtn.addEventListener('click', closeModal);
+            }
+            
+            if (modalCloseBtn) {
+                modalCloseBtn.addEventListener('click', closeModal);
+            }
+            
+            if (modalOverlay) {
+                modalOverlay.addEventListener('click', closeModal);
+            }
+            
+            // 确认删除
+            if (confirmDeleteBtn) {
+                confirmDeleteBtn.addEventListener('click', function() {
+                    const selectedIds = getSelectedPostIds();
+                    console.log('确认删除帖子:', selectedIds);
+                    // 这里应该添加批量删除的AJAX请求
+                    
+                    // 关闭模态框
+                    closeModal();
+                });
+            }
+        }
+        
+        // 获取所有选中的帖子ID
+        function getSelectedPostIds() {
+            const checkedBoxes = document.querySelectorAll('.post-select:checked');
+            return Array.from(checkedBoxes).map(checkbox => checkbox.dataset.id);
+        }
+        
+        // 单个帖子删除
+        const deleteButtons = document.querySelectorAll('.delete-post');
+        if (deleteButtons.length > 0) {
+            deleteButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const postId = this.dataset.id;
+                    console.log('删除帖子:', postId);
+                    // 这里应该添加删除的AJAX请求
+                    
+                    // 可以选择是否显示确认对话框
+                    // const deleteModal = document.getElementById('deleteModal');
+                    // if (deleteModal) {
+                    //     deleteModal.classList.add('show');
+                    // }
+                });
+            });
+        }
+        
+        // 恢复删除的帖子
+        const restoreButtons = document.querySelectorAll('.restore-post');
+        if (restoreButtons.length > 0) {
+            restoreButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const postId = this.dataset.id;
+                    console.log('恢复帖子:', postId);
+                    // 这里应该添加恢复的AJAX请求
+                });
+            });
+        }
+        
+        // 分页按钮
+        const pageButtons = document.querySelectorAll('.page-btn');
+        if (pageButtons.length > 0) {
+            pageButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    if (!this.classList.contains('active')) {
+                        pageButtons.forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        // 这里可以添加加载对应页码数据的逻辑
+                        console.log('切换到页码:', this.textContent);
+                    }
+                });
+            });
+        }
+    });
+</script>
 {% endblock %}
