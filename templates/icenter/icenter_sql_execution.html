@@ -1,164 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!--
+     堆粑粑
+        对不住了未来的哥们，
+        因为开发周期太长了，我想缩短时间，我无法保证代码质量。。。
+    -->
     <meta charset="UTF-8">
     <title>Icenter -- Execute SQL</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/icenter_sql.css') }}">
 
     <!-- Highlight.js 资源 -->
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/styles/default.min.css">
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/highlight.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/languages/sql.min.js"></script>
-
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-
-        #editorContainer {
-            width: 100%;
-            height: 200px;
-            margin-bottom: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            background-color: #f8f8f8;
-            overflow: auto;
-        }
-
-        #codeEditor {
-            white-space: pre-wrap;
-            caret-color: #333;
-            line-height: 1.5;
-            padding: 10px;
-            outline: none;
-            min-height: 180px;
-        }
-
-        #editorContainer[data-placeholder]:empty:before {
-            content: attr(data-placeholder);
-            color: #888;
-            cursor: text;
-        }
-
-        #editorContainer:focus-within {
-            border-color: #4CAF50;
-            box-shadow: 0 0 3px rgba(76, 175, 80, 0.3);
-        }
-
-        button {
-            padding: 8px 16px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background-color: #45a049;
-        }
-
-        /* 高亮样式覆盖 */
-        .hljs {
-            background: transparent !important;
-            padding: 0 !important;
-        }
-    </style>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/icenter_sql.css') }}">
 </head>
 <body>
-<!-- 编辑器容器 -->
-<div id="editorContainer" data-placeholder="Please input your SQL Statement">
-    <pre><code id="codeEditor" contenteditable="true" class="language-sql"></code></pre>
+<div class="main-container">
+    <!-- 侧边栏 -->
+    <div class="sidebar">
+        <a href="/real_icenter_index">
+            <button class="sidebar-button">仪表盘主页</button>
+        </a>
+        <a href="/sql_execute_page">
+            <button class="sidebar-button">ExecuteSQL</button>
+        </a>
+    </div>
+
+    <!-- 内容区域 -->
+    <div class="content-area">
+        <div id="editorContainer" data-placeholder="Please input your SQL Statement">
+            <pre><code id="codeEditor" contenteditable="true" class="language-sql"></code></pre>
+        </div>
+        <div class="button-container">
+            <button id="submit-sql-statement-to-backend">▶️ Execute SQL</button>
+        </div>
+    </div>
 </div>
 
-<!-- 提交按钮 -->
-<button id="submit-sql-statement-to-backend">Execute SQL</button>
+<script src="{{ url_for('static', filename='js/execute_sql.js') }}"></script>
 
-<script>
-    // 初始化高亮
-    hljs.highlightAll();
-
-    const editor = document.getElementById('codeEditor');
-    const container = document.getElementById('editorContainer');
-    const submitButton = document.getElementById('submit-sql-statement-to-backend');
-    let isHighlighting = false;
-
-    // 初始化placeholder
-    const updatePlaceholder = () => {
-        if (!editor.textContent.trim()) {
-            editor.textContent = container.dataset.placeholder;
-            hljs.highlightElement(editor);
-        }
-    };
-    updatePlaceholder();
-
-    // 焦点事件
-    editor.addEventListener('focus', () => {
-        if (editor.textContent === container.dataset.placeholder) {
-            editor.textContent = '';
-        }
-    });
-
-    // 失焦事件
-    editor.addEventListener('blur', updatePlaceholder);
-
-    // 输入事件
-    editor.addEventListener('input', () => {
-        if (isHighlighting) return;
-        isHighlighting = true;
-
-        // 保存光标位置
-        const selection = window.getSelection();
-        const range = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
-
-        // 执行高亮
-        hljs.highlightElement(editor);
-
-        // 恢复光标
-        if (range) {
-            selection.removeAllRanges();
-            selection.addRange(range);
-        }
-        isHighlighting = false;
-    });
-
-    // Tab键支持
-    editor.addEventListener('keydown', (e) => {
-        if (e.key === 'Tab') {
-            document.execCommand('insertText', false, '    ');
-            e.preventDefault();
-        }
-    });
-
-    // 提交逻辑
-    submitButton.addEventListener('click', () => {
-        const code = editor.textContent.trim();
-        if (code === container.dataset.placeholder || !code) {
-            alert('Please input your SQL statement!');
-            return;
-        }
-
-        fetch(`/execute_sql`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                sql: code  // 使用参数名sql代替code
-            })
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert(`执行成功: ${data.message}`);
-                    if (data.data) {  // 如果有返回数据
-                        console.table(data.data);  // 以表格形式输出结果
-                    }
-                } else {
-                    alert(`执行失败: ${data.message}`);
-                }
-            });
-    });
-</script>
 </body>
 </html>

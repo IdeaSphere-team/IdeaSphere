@@ -1,0 +1,95 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    min-height: 100vh;
+}
+
+.main-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+.sidebar {
+    width: 200px;
+    padding: 20px;
+    background: #f5f5f5;
+    border-right: 1px solid #ddd;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+}
+
+.content-area {
+    flex: 1;
+    padding: 30px;
+    margin-left: 200px;
+}
+
+#editorContainer {
+    border: 2px solid #4CAF50;
+    transition: border-color 0.3s ease;
+    background: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 800px;
+    margin-top: 20px;
+}
+
+#codeEditor {
+    user-select: text;
+    white-space: pre-wrap;
+    word-break: keep-all;
+    font-family: 'Consolas', monospace;
+    font-size: 14px;
+    tab-size: 4;
+    padding: 25px;
+    color: #2c3e50;
+    min-height: 200px;
+    outline: none;
+}
+
+.sidebar-button {
+    display: block;
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 12px;
+    text-align: left;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#submit-sql-statement-to-backend {
+    padding: 12px 34px;
+    font-size: 16px;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+    margin-top: 20px;
+}
+
+/* 高亮样式 */
+#editorContainer[data-placeholder]:empty:before {
+    content: attr(data-placeholder);
+    color: #888;
+    cursor: text;
+}
+
+/* 交互效果 */
+#submit-sql-statement-to-backend:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+}
+
+#submit-sql-statement-to-backend:active {
+    transform: translateY(0);
+}
+
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

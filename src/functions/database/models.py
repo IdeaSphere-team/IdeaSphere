@@ -105,24 +105,6 @@ class SearchModel(db.Model):
     keyword = db.Column(db.String(100), unique=True, nullable=False)
 
 
-# 增加系统设置模型
-class SystemSetting(db.Model):
+class InstallationStatus(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    key = db.Column(db.String(100), unique=True, nullable=False)
-    value = db.Column(db.Text, nullable=True)
-    type = db.Column(db.String(20), default='string')  # string, int, bool, json
-    description = db.Column(db.String(255), nullable=True)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    updated_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
-
-
-# 增加系统日志模型
-class SystemLog(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    level = db.Column(db.String(20), nullable=False)  # debug, info, warning, error
-    source = db.Column(db.String(50), nullable=False)
-    message = db.Column(db.Text, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
-    ip_address = db.Column(db.String(50), nullable=True)
-    stack_trace = db.Column(db.Text, nullable=True)
+    is_installed = db.Column(db.Boolean, default=False)

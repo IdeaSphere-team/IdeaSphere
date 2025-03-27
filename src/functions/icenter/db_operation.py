@@ -2,6 +2,7 @@
 ICenter module
 @Dev Jason
 """
+from flask import request, jsonify
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -90,3 +91,24 @@ def add_column_to_table(table_name, column_name, column_type):
     except Exception as e:
         logging.error(f"Error adding column {column_name} to table {table_name}: {e}")
         return False
+
+def execute_sql_logic():
+    """
+    二次封装
+    主功能实现还是在 execute_sql_statement
+    :return: any
+    """
+    sql_statement = request.json.get('sql')
+
+    if not sql_statement:
+        return jsonify({
+            "success": False,
+            "message": "未提供SQL语句"
+        }), 400
+
+    # 执行并获取结果
+    result = execute_sql_statement(sql_statement)
+
+    # 返回标准JSON响应
+    status_code = 200 if result['success'] else 500
+    return jsonify(result), status_code

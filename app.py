@@ -1,12 +1,12 @@
 import os
 import yaml
-from flask import Flask, request, session, redirect, url_for, g, make_response, jsonify, flash, render_template, abort
-from flask_wtf.csrf import CSRFProtect, generate_csrf
+from flask import Flask, request, session, redirect, url_for, g
+from flask_wtf.csrf import CSRFProtect
 from src.db_ext import db
-from src.functions.database.models import User, Post, Comment, Report, Like, Section
-from src.functions.icenter.db_operation import execute_sql_statement
+from src.functions.database.models import User, Post, Comment
+from src.functions.icenter.db_operation import execute_sql_logic
 from src.functions.index import index_logic
-from src.functions.parser.markdown_parser import remove_markdown, convert_markdown_to_html
+from src.functions.parser.markdown_parser import remove_markdown
 from src.functions.perm.permission_groups import permission_group_logic
 from src.functions.service.admin import admin_panel_logic, manage_reports_logic, manage_users_logic, manage_posts_logic, delete_post_logic
 from src.functions.service.intstall import install_logic
@@ -236,22 +236,7 @@ def real_icenter_index():
 
 @app.route('/execute_sql', methods=['POST'])  # 改为仅接受POST请求
 def execute_sql():
-    # 从JSON请求体中获取SQL
-    sql_statement = request.json.get('sql')
-
-    if not sql_statement:
-        return jsonify({
-            "success": False,
-            "message": "未提供SQL语句"
-        }), 400
-
-    # 执行并获取结果
-    result = execute_sql_statement(sql_statement)
-
-    # 返回标准JSON响应
-    status_code = 200 if result['success'] else 500
-    return jsonify(result), status_code
-
+    return execute_sql_logic()
 
 @app.route('/sql_execute_page')
 def sql_execute_page():

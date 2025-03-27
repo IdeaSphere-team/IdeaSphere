@@ -39,7 +39,7 @@
         <div class="comment_box">
             {% if g.user %}
             <form method="POST">
-                <meta name="csrf-token" content="{{ csrf_token }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="mb-3" onmouseover="comment_input_animation()" onmouseout="Rcomment_input_animation()">
                     <label for="comment" class="form-label">发表评论</label>
                     <div class="input-group" id="comment-input-group">

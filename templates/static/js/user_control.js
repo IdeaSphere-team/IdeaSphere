@@ -12,6 +12,7 @@ async function getCSRFToken() {
 // 定义点赞函数
 async function incrementLike(postId) {
     const csrfToken = await getCSRFToken();
+    console.log(csrfToken)
     fetch(`/like_post/${postId}`, {
         method: 'POST',
         headers: {
@@ -113,6 +114,7 @@ async function reportComment(commentId) {
 
 let cig_id = document.getElementById("comment-input-group");
 let comment_id = document.getElementById("comment");
+
 function comment_input_animation() {
     cig_id.classList.add("a");
     comment_id.classList.add("a");

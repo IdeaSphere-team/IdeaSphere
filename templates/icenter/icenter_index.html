@@ -1,12 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/icenter_index.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/icenter_sql.css') }}">
     <meta charset="UTF-8">
     <title>ICenter_主页仪表盘</title>
-    <div class="sidebar">
-        <button class="sidebar-button">仪表盘主页</button>
-        <button class="sidebar-button">ExecuteSQL</button>
+    <div class="main-container">
+            <!-- 侧边栏 -->
+            <div class="sidebar">
+                <a href="/real_icenter_index">
+                    <button class="sidebar-button">仪表盘主页</button>
+                </a>
+                <a href="/sql_execute_page">
+                    <button class="sidebar-button">ExecuteSQL</button>
+                </a>
+        </div>
     </div>
 </head>
 <body>

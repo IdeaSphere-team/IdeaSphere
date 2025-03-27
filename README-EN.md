@@ -2,13 +2,16 @@
 
 <div align="center">
   <a href="https://github.com/IdeaSphere-team/IdeaSphere/">
-    <img src="logo.png" alt="Logo" width="80" height="80">
+    <img src="/templates/static/img/logo-white.png" alt="Logo" width="80" height="80">
   </a>
 
 <h3 align="center">IdeaSphere</h3>
 
 <p align="center">
   A forum software focusing on simplicity, practicality and easy configuration, built with Python3.
+</p>
+<p align="center">
+  主打简单实用易于配置的论坛程序，基于 Python3 完成
 </p>
 
 [![GitHub forks](https://img.shields.io/github/forks/IdeaSphere-team/IdeaSphere.svg?style=for-the-badge)](https://github.comIdeaSphere-team/IdeaSphere/network)
@@ -19,7 +22,7 @@
 [![Discord](https://img.shields.io/discord/1349304044723765258?style=for-the-badge&logo=discord)](https://discord.gg/eyn9GC88XP)
 
 <p align="center">
-  <a href="https://github.com/IdeaSphere-team/IdeaSphere/">简体中文</a> | English
+  <a href="https://github.com/IdeaSphere-team/IdeaSphere/blob/main/README.md">简体中文</a> | English
 </p>
 
 </div>
