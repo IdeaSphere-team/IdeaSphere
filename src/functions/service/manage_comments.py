@@ -116,7 +116,7 @@ def manage_comments_logic():
     )
     
     return render_template(
-        'manage_comments.html',
+        'admin/comments.html',
         comments=comments,
         comment_count=comment_count,
         pagination=pagination,

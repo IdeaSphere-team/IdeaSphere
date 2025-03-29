@@ -4,6 +4,10 @@
 
 {% block header_title %}用户管理{% endblock %}
 
+{% block extra_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
 {% block content %}
 <!-- 顶部卡片 -->
 <div class="row">
@@ -20,7 +24,7 @@
                     </div>
                     <div class="filter-buttons">
                         <button class="filter-btn active" data-filter="all">
-                            全部用户
+                            <i class="fas fa-users"></i> 全部用户
                         </button>
                         <button class="filter-btn" data-filter="admin">
                             <i class="fas fa-shield-alt"></i> 管理员
@@ -37,15 +41,59 @@
         </div>
     </div>
     <div class="col-4">
-        <div class="card stats-card">
-            <div class="stats-icon primary">
-                <i class="fas fa-users"></i>
+        <div class="card actions-card">
+            <div class="card-body">
+                <div class="card-actions">
+                    <button class="btn btn-primary" id="addUserBtn">
+                        <i class="fas fa-plus"></i> 添加用户
+                    </button>
+                    <a href="{{ url_for('admin_users', export='csv') }}" class="btn btn-light">
+                        <i class="fas fa-download"></i> 导出数据
+                    </a>
+                </div>
             </div>
-            <div class="stats-info">
-                <div class="stats-value">{{ user_count }}</div>
-                <p class="stats-label">注册用户总数</p>
-                <div class="stats-change positive">
-                    <i class="fas fa-arrow-up"></i> {{ new_users_percent }}% 本周
+        </div>
+    </div>
+</div>
+
+<!-- 用户角色统计卡片 -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="role-stats-cards">
+            <div class="role-stat-card">
+                <div class="role-stat-icon admin-icon">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <div class="role-stat-info">
+                    <div class="role-stat-label">管理员</div>
+                    <div class="role-stat-value">{{ roles_count.admin }}</div>
+                </div>
+            </div>
+            <div class="role-stat-card">
+                <div class="role-stat-icon mod-icon">
+                    <i class="fas fa-user-cog"></i>
+                </div>
+                <div class="role-stat-info">
+                    <div class="role-stat-label">版主</div>
+                    <div class="role-stat-value">{{ roles_count.moderator }}</div>
+                </div>
+            </div>
+            <div class="role-stat-card">
+                <div class="role-stat-icon user-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="role-stat-info">
+                    <div class="role-stat-label">普通用户</div>
+                    <div class="role-stat-value">{{ roles_count.user }}</div>
+                </div>
+            </div>
+            <div class="role-stat-card">
+                <div class="role-stat-icon total-icon">
+                    <i class="fas fa-user-friends"></i>
+                </div>
+                <div class="role-stat-info">
+                    <div class="role-stat-label">总计</div>
+                    <div class="role-stat-value">{{ user_count }}</div>
                 </div>
             </div>
         </div>
@@ -53,16 +101,66 @@
 </div>
 
 <!-- 用户表格 -->
-<div class="card fade-in">
+<div class="card users-list-card mt-4">
     <div class="card-header">
-        <h3 class="card-title">用户列表</h3>
+        <div class="card-header-content">
+            <h3 class="card-title">用户列表</h3>
+            <span class="card-subtitle">共 {{ pagination.total }} 位用户</span>
+        </div>
         <div class="card-header-actions">
-            <button class="btn btn-light btn-sm" id="exportUsersBtn">
-                <i class="fas fa-download"></i> 导出数据
-            </button>
-            <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#addUserModal">
-                <i class="fas fa-plus"></i> 添加用户
-            </button>
+            <div class="dropdown">
+                <button class="btn btn-light btn-sm dropdown-toggle">
+                    <i class="fas fa-filter"></i> 筛选
+                </button>
+                <div class="dropdown-menu">
+                    <div class="dropdown-item" data-filter="all">
+                        <i class="fas fa-users"></i> 全部用户
+                    </div>
+                    <div class="dropdown-item" data-filter="admin">
+                        <i class="fas fa-shield-alt"></i> 管理员
+                    </div>
+                    <div class="dropdown-item" data-filter="moderator">
+                        <i class="fas fa-user-cog"></i> 版主
+                    </div>
+                    <div class="dropdown-item" data-filter="active">
+                        <i class="fas fa-check-circle"></i> 活跃用户
+                    </div>
+                    <div class="dropdown-item" data-filter="inactive">
+                        <i class="fas fa-ban"></i> 已禁用用户
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <div class="dropdown-item" data-filter="recent">
+                        <i class="fas fa-clock"></i> 最近注册
+                    </div>
+                </div>
+            </div>
+            <div class="dropdown">
+                <button class="btn btn-light btn-sm dropdown-toggle">
+                    <i class="fas fa-sort"></i> 排序
+                </button>
+                <div class="dropdown-menu">
+                    <div class="dropdown-item" data-sort="username-asc">
+                        <i class="fas fa-sort-alpha-down"></i> 用户名 (升序)
+                    </div>
+                    <div class="dropdown-item" data-sort="username-desc">
+                        <i class="fas fa-sort-alpha-down-alt"></i> 用户名 (降序)
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <div class="dropdown-item" data-sort="date-asc">
+                        <i class="fas fa-sort-numeric-down"></i> 注册日期 (旧→新)
+                    </div>
+                    <div class="dropdown-item" data-sort="date-desc">
+                        <i class="fas fa-sort-numeric-down-alt"></i> 注册日期 (新→旧)
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <div class="dropdown-item" data-sort="posts-desc">
+                        <i class="fas fa-sort-amount-down-alt"></i> 帖子数 (多→少)
+                    </div>
+                    <div class="dropdown-item" data-sort="posts-asc">
+                        <i class="fas fa-sort-amount-down"></i> 帖子数 (少→多)
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     <div class="card-body p-0">
@@ -70,19 +168,19 @@
             <table class="table users-table" id="usersTable">
                 <thead>
                     <tr>
-                        <th>
+                        <th style="width: 40px;">
                             <div class="checkbox-wrapper">
                                 <input type="checkbox" id="selectAllUsers" class="custom-checkbox">
                                 <label for="selectAllUsers"></label>
                             </div>
                         </th>
                         <th>用户</th>
-                        <th>角色</th>
-                        <th>注册日期</th>
-                        <th>帖子数</th>
-                        <th>评论数</th>
-                        <th>状态</th>
-                        <th>操作</th>
+                        <th style="width: 120px;">角色</th>
+                        <th style="width: 130px;">注册日期</th>
+                        <th style="width: 100px;">帖子数</th>
+                        <th style="width: 100px;">评论数</th>
+                        <th style="width: 100px;">状态</th>
+                        <th style="width: 120px;">操作</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -106,7 +204,7 @@
                             </div>
                         </td>
                         <td>
-                            <span class="badge {% if user.role == 'admin' %}badge-primary{% else %}badge-light{% endif %}">
+                            <span class="role-badge role-badge-{{ user.role }}">
                                 {{ user.role }}
                             </span>
                         </td>
@@ -120,10 +218,10 @@
                         </td>
                         <td>
                             <div class="table-actions">
-                                <a href="#" class="action-btn" title="查看详情">
+                                <a href="#" class="action-btn view-user-btn" title="查看详情">
                                     <i class="fas fa-eye"></i>
                                 </a>
-                                <button class="action-btn edit-user-btn" title="编辑用户" data-user-id="{{ user.id }}">
+                                <button class="action-btn edit-user-btn" title="编辑用户" data-user-id="{{ user.id }}" data-username="{{ user.username }}" data-email="{{ user.email }}" data-role="{{ user.role }}">
                                     <i class="fas fa-edit"></i>
                                 </button>
                                 {% if user.is_active %}
@@ -202,6 +300,7 @@
             <div class="modal-body">
                 <form id="addUserForm" action="{{ url_for('admin_users') }}" method="POST">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="action" value="add">
                     <div class="form-group">
                         <label for="username" class="form-label">用户名</label>
                         <input type="text" id="username" name="username" class="form-control" required>
@@ -218,6 +317,7 @@
                         <label for="role" class="form-label">角色</label>
                         <select id="role" name="role" class="form-control">
                             <option value="user">普通用户</option>
+                            <option value="moderator">版主</option>
                             <option value="admin">管理员</option>
                         </select>
                     </div>
@@ -231,12 +331,105 @@
     </div>
 </div>
 
+<!-- 编辑用户模态框 -->
+<div class="modal fade" id="editUserModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">编辑用户</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editUserForm" action="{{ url_for('admin_users') }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="action" value="edit">
+                    <input type="hidden" name="user_id" id="edit_user_id">
+                    <div class="form-group">
+                        <label for="edit_username" class="form-label">用户名</label>
+                        <input type="text" id="edit_username" name="username" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_email" class="form-label">邮箱</label>
+                        <input type="email" id="edit_email" name="email" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_password" class="form-label">密码 (留空表示不修改)</label>
+                        <input type="password" id="edit_password" name="password" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_role" class="form-label">角色</label>
+                        <select id="edit_role" name="role" class="form-control">
+                            <option value="user">普通用户</option>
+                            <option value="moderator">版主</option>
+                            <option value="admin">管理员</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-dismiss="modal">取消</button>
+                <button type="submit" form="editUserForm" class="btn btn-primary">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 确认删除模态框 -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">删除用户</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>确定要删除此用户吗？此操作不可撤销。</p>
+                <form id="deleteUserForm" action="{{ url_for('admin_users') }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" name="user_id" id="delete_user_id">
+                    <div class="form-actions text-right">
+                        <button type="button" class="btn btn-light" data-dismiss="modal">取消</button>
+                        <button type="submit" class="btn btn-danger">删除</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 确认批量操作模态框 -->
+<div class="modal fade" id="bulkActionModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="bulkActionTitle">批量操作</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="bulkActionMessage">确定要执行此操作吗？</p>
+                <form id="bulkActionForm" action="{{ url_for('admin_users') }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="action" id="bulk_action_type">
+                    <input type="hidden" name="user_ids" id="bulk_user_ids">
+                    <div class="form-actions text-right">
+                        <button type="button" class="btn btn-light" data-dismiss="modal">取消</button>
+                        <button type="submit" class="btn btn-primary" id="confirmBulkAction">确认</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
-    /* 搜索和过滤器 */
-    .users-filter-card {
-        margin-bottom: 1.5rem;
-    }
-    
+    /* 搜索框样式优化 */
     .search-wrapper {
         display: flex;
         flex-direction: column;
@@ -245,53 +438,48 @@
     
     .search-box {
         position: relative;
-        flex: 1;
+        display: flex;
+        align-items: center;
     }
     
     .search-icon {
         position: absolute;
         left: 1rem;
-        top: 50%;
-        transform: translateY(-50%);
-        color: var(--gray-400);
+        color: var(--gray-500);
     }
     
     .search-input {
-        width: 100%;
-        padding: 0.75rem 2.5rem;
-        font-size: 0.875rem;
         border: 1px solid var(--gray-300);
-        border-radius: var(--border-radius-md);
-        transition: all 0.15s ease;
+        border-radius: var(--border-radius);
+        padding: 0.75rem 1rem 0.75rem 2.5rem;
+        width: 100%;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+        background-color: var(--gray-50);
     }
     
     .search-input:focus {
-        outline: none;
         border-color: var(--primary);
-        box-shadow: 0 0 0 3px rgba(94, 114, 228, 0.1);
+        background-color: white;
+        box-shadow: 0 0 0 3px rgba(44, 62, 80, 0.1);
+        outline: none;
     }
     
     .btn-clear {
         position: absolute;
         right: 1rem;
-        top: 50%;
-        transform: translateY(-50%);
         background: none;
         border: none;
-        color: var(--gray-400);
+        color: var(--gray-500);
         cursor: pointer;
-        padding: 0.25rem;
-        font-size: 0.75rem;
-        opacity: 0;
-        visibility: hidden;
-        transition: all 0.15s ease;
+        display: none;
     }
     
-    .search-input:not(:placeholder-shown) + .btn-clear {
-        opacity: 1;
-        visibility: visible;
+    .btn-clear.show {
+        display: block;
     }
     
+    /* 过滤按钮样式优化 */
     .filter-buttons {
         display: flex;
         gap: 0.5rem;
@@ -299,46 +487,113 @@
     }
     
     .filter-btn {
-        background: var(--gray-100);
-        border: none;
-        padding: 0.5rem 0.75rem;
-        font-size: 0.75rem;
-        font-weight: 500;
+        background: none;
+        border: 1px solid var(--gray-300);
+        border-radius: var(--border-radius);
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
         color: var(--gray-700);
-        border-radius: var(--border-radius-md);
         cursor: pointer;
-        transition: all 0.15s ease;
+        transition: all 0.2s ease;
         display: flex;
         align-items: center;
         gap: 0.5rem;
     }
     
-    .filter-btn i {
-        font-size: 0.75rem;
-    }
-    
     .filter-btn:hover {
-        background: var(--gray-200);
+        background-color: var(--gray-100);
+        border-color: var(--gray-400);
     }
     
     .filter-btn.active {
-        background: var(--primary);
+        background-color: var(--primary);
+        color: white;
+        border-color: var(--primary);
+    }
+    
+    .filter-btn i {
+        font-size: 0.85rem;
+    }
+    
+    /* 卡片操作样式优化 */
+    .card-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+    
+    /* 用户角色统计卡片样式优化 */
+    .role-stats-cards {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+    }
+    
+    .role-stat-card {
+        background-color: white;
+        border-radius: var(--border-radius-md);
+        padding: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        transition: all 0.2s ease;
+    }
+    
+    .role-stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+    
+    .role-stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--border-radius);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .role-stat-icon i {
+        font-size: 1.25rem;
         color: white;
     }
     
-    /* 用户表格 */
-    .users-table th, .users-table td {
-        vertical-align: middle;
+    .role-stat-info {
+        flex: 1;
     }
     
-    .card-header-actions {
-        display: flex;
-        gap: 0.5rem;
+    .role-stat-label {
+        font-size: 0.9rem;
+        color: var(--gray-600);
+        margin-bottom: 0.25rem;
     }
     
-    .btn-sm {
-        padding: 0.375rem 0.75rem;
-        font-size: 0.75rem;
+    .role-stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--gray-900);
+    }
+    
+    .admin-icon {
+        background-color: var(--primary);
+    }
+    
+    .mod-icon {
+        background-color: var(--secondary);
+    }
+    
+    .user-icon {
+        background-color: var(--success);
+    }
+    
+    .total-icon {
+        background-color: var(--info);
+    }
+    
+    /* 列表样式优化 */
+    .users-list-card {
+        border-radius: var(--border-radius-md);
+        overflow: hidden;
     }
     
     .user-info-cell {
@@ -347,50 +602,30 @@
         gap: 0.75rem;
     }
     
-    .user-avatar {
-        width: 36px;
-        height: 36px;
-        border-radius: var(--border-radius-full);
-        background: var(--primary);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 600;
-        color: white;
-    }
-    
     .user-details {
-        display: flex;
-        flex-direction: column;
+        line-height: 1.4;
     }
     
     .user-name {
-        font-weight: 500;
-        font-size: 0.875rem;
+        font-weight: 600;
+        font-size: 0.95rem;
     }
     
     .user-email {
+        font-size: 0.85rem;
+        color: var(--gray-600);
+    }
+    
+    .badge {
+        padding: 0.35rem 0.6rem;
+        border-radius: var(--border-radius);
         font-size: 0.75rem;
-        color: var(--gray-500);
+        font-weight: 600;
     }
     
-    .status-badge {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.25rem 0.5rem;
-        font-size: 0.75rem;
-        font-weight: 500;
-        border-radius: var(--border-radius-full);
-    }
-    
-    .status-active {
-        background-color: rgba(45, 206, 137, 0.1);
-        color: var(--success);
-    }
-    
-    .status-inactive {
-        background-color: rgba(245, 54, 92, 0.1);
-        color: var(--danger);
+    .badge-primary {
+        background-color: var(--primary);
+        color: white;
     }
     
     .badge-light {
@@ -398,98 +633,180 @@
         color: var(--gray-700);
     }
     
+    .status-badge {
+        padding: 0.35rem 0.6rem;
+        border-radius: var(--border-radius);
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .status-active {
+        background-color: rgba(46, 204, 113, 0.15);
+        color: var(--success);
+    }
+    
+    .status-inactive {
+        background-color: rgba(231, 76, 60, 0.15);
+        color: var(--danger);
+    }
+    
     .table-actions {
         display: flex;
-        gap: 0.5rem;
+        gap: 0.25rem;
     }
     
     .action-btn {
-        width: 28px;
-        height: 28px;
-        border-radius: var(--border-radius-full);
-        background: var(--gray-100);
-        color: var(--gray-700);
+        width: 32px;
+        height: 32px;
         display: flex;
         align-items: center;
         justify-content: center;
+        border-radius: var(--border-radius);
+        background: none;
         border: none;
+        color: var(--gray-600);
         cursor: pointer;
         transition: all 0.15s ease;
-        font-size: 0.75rem;
     }
     
     .action-btn:hover {
-        background: var(--gray-200);
+        background-color: var(--gray-100);
         color: var(--gray-900);
     }
     
-    .edit-user-btn:hover {
-        background: var(--primary);
-        color: white;
+    /* 响应式布局优化 */
+    @media (max-width: 1200px) {
+        .role-stats-cards {
+            grid-template-columns: repeat(2, 1fr);
+        }
     }
     
-    .ban-user-btn:hover, .delete-user-btn:hover {
-        background: var(--danger);
+    @media (max-width: 768px) {
+        .role-stats-cards {
+            grid-template-columns: 1fr;
+        }
+        
+        .col-8, .col-4 {
+            width: 100%;
+        }
+    }
+
+    /* 表格头部样式 */
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--gray-200);
+    }
+
+    .card-header-content {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .card-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--gray-900);
+        margin: 0 0 0.25rem 0;
+    }
+
+    .card-subtitle {
+        font-size: 0.85rem;
+        color: var(--gray-600);
+    }
+
+    .card-header-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .dropdown-toggle {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* 角色标签 */
+    .role-badge {
+        padding: 0.35rem 0.6rem;
+        border-radius: var(--border-radius);
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-block;
+        text-align: center;
+    }
+
+    .role-badge-admin {
+        background-color: var(--primary);
         color: white;
     }
-    
-    .activate-user-btn:hover {
-        background: var(--success);
+
+    .role-badge-moderator {
+        background-color: var(--secondary);
         color: white;
     }
-    
+
+    .role-badge-user {
+        background-color: var(--gray-200);
+        color: var(--gray-700);
+    }
+
     /* 分页 */
     .card-footer {
+        padding: 1rem 1.5rem;
         display: flex;
         align-items: center;
         justify-content: space-between;
+        border-top: 1px solid var(--gray-200);
     }
-    
+
+    .pagination-info {
+        font-size: 0.85rem;
+        color: var(--gray-600);
+    }
+
     .pagination {
         display: flex;
         align-items: center;
         gap: 0.25rem;
     }
-    
+
     .pagination-btn {
         width: 32px;
         height: 32px;
         display: flex;
         align-items: center;
         justify-content: center;
-        background: var(--gray-100);
+        border-radius: var(--border-radius);
+        background-color: var(--gray-100);
         color: var(--gray-700);
-        border-radius: var(--border-radius-md);
-        font-size: 0.75rem;
-        transition: all 0.15s ease;
+        font-size: 0.85rem;
+        transition: all 0.2s ease;
     }
-    
+
     .pagination-btn:hover {
-        background: var(--gray-200);
+        background-color: var(--gray-200);
     }
-    
+
     .pagination-btn.active {
-        background: var(--primary);
+        background-color: var(--primary);
         color: white;
     }
-    
+
     .pagination-btn.disabled {
         opacity: 0.5;
-        cursor: not-allowed;
+        pointer-events: none;
     }
-    
-    .pagination-info {
-        font-size: 0.75rem;
-        color: var(--gray-500);
-    }
-    
+
     /* 复选框样式 */
     .checkbox-wrapper {
         position: relative;
         width: 18px;
         height: 18px;
     }
-    
+
     .custom-checkbox {
         position: absolute;
         opacity: 0;
@@ -497,7 +814,7 @@
         height: 0;
         width: 0;
     }
-    
+
     .checkbox-wrapper label {
         position: absolute;
         top: 0;
@@ -507,13 +824,13 @@
         background-color: var(--gray-200);
         border-radius: var(--border-radius-sm);
         cursor: pointer;
-        transition: all 0.15s ease;
+        transition: all 0.2s ease;
     }
-    
+
     .custom-checkbox:checked + label {
         background-color: var(--primary);
     }
-    
+
     .checkbox-wrapper label:after {
         content: "";
         position: absolute;
@@ -521,310 +838,330 @@
         left: 6px;
         top: 3px;
         width: 5px;
-        height: 10px;
+        height: 9px;
         border: solid white;
         border-width: 0 2px 2px 0;
         transform: rotate(45deg);
     }
-    
+
     .custom-checkbox:checked + label:after {
         display: block;
     }
-    
-    /* 批量操作条 */
+
+    /* 批量操作浮动按钮 */
     .bulk-actions {
         position: fixed;
-        bottom: -80px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: white;
-        border-radius: var(--border-radius-lg);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        bottom: 0;
+        left: var(--sidebar-width);
+        right: 0;
+        background-color: white;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
         padding: 1rem 1.5rem;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 2rem;
-        transition: all 0.3s ease;
-        opacity: 0;
-        z-index: 100;
+        transform: translateY(100%);
+        transition: transform 0.3s ease;
+        z-index: 990;
     }
-    
+
     .bulk-actions.show {
-        bottom: 20px;
-        opacity: 1;
+        transform: translateY(0);
     }
-    
+
     .bulk-actions-info {
         font-weight: 500;
-        font-size: 0.875rem;
+        font-size: 0.9rem;
     }
-    
+
     .bulk-actions-buttons {
         display: flex;
         gap: 0.5rem;
     }
-    
-    /* 模态框样式 */
-    .modal-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 1.25rem 1.5rem;
-        border-bottom: 1px solid var(--gray-200);
-    }
-    
-    .modal-title {
-        font-size: 1.125rem;
-        font-weight: 600;
-        margin: 0;
-    }
-    
-    .close {
-        background: none;
-        border: none;
-        font-size: 1rem;
-        color: var(--gray-500);
-        cursor: pointer;
-    }
-    
-    .modal-body {
-        padding: 1.5rem;
-    }
-    
-    .modal-footer {
-        padding: 1rem 1.5rem;
-        border-top: 1px solid var(--gray-200);
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        gap: 0.75rem;
-    }
-    
-    /* 响应式调整 */
+
     @media (max-width: 768px) {
-        .search-wrapper {
+        .card-header {
             flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
         }
         
-        .table-responsive {
-            overflow-x: auto;
+        .card-footer {
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
         }
         
         .bulk-actions {
+            left: 0;
             flex-direction: column;
             gap: 1rem;
-            left: 0;
-            right: 0;
-            width: 100%;
-            transform: none;
-            border-radius: 0;
         }
         
-        .bulk-actions-info, .bulk-actions-buttons {
+        .bulk-actions-buttons {
             width: 100%;
+            flex-wrap: wrap;
             justify-content: center;
         }
+    }
+
+    /* 下拉菜单样式 */
+    .dropdown {
+        position: relative;
+        display: inline-block;
+    }
+
+    .dropdown-toggle::after {
+        display: inline-block;
+        margin-left: 0.5em;
+        vertical-align: middle;
+        content: "";
+        border-top: 0.3em solid;
+        border-right: 0.3em solid transparent;
+        border-bottom: 0;
+        border-left: 0.3em solid transparent;
+    }
+
+    .dropdown-menu {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        z-index: 1000;
+        display: none;
+        min-width: 10rem;
+        padding: 0.5rem 0;
+        margin: 0.125rem 0 0;
+        font-size: 0.9rem;
+        color: var(--gray-800);
+        text-align: left;
+        list-style: none;
+        background-color: #fff;
+        background-clip: padding-box;
+        border: 1px solid var(--gray-200);
+        border-radius: var(--border-radius);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+    }
+
+    .dropdown.show .dropdown-menu {
+        display: block;
+    }
+
+    .dropdown-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        width: 100%;
+        padding: 0.5rem 1rem;
+        clear: both;
+        font-weight: 400;
+        color: var(--gray-700);
+        text-align: inherit;
+        white-space: nowrap;
+        background-color: transparent;
+        border: 0;
+        cursor: pointer;
+    }
+
+    .dropdown-item:hover, .dropdown-item:focus {
+        color: var(--gray-900);
+        text-decoration: none;
+        background-color: var(--gray-100);
+    }
+
+    .dropdown-divider {
+        height: 0;
+        margin: 0.5rem 0;
+        overflow: hidden;
+        border-top: 1px solid var(--gray-200);
     }
 </style>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // 用户搜索功能
-        const userSearchInput = document.getElementById('userSearchInput');
-        const clearSearchBtn = document.getElementById('clearSearch');
-        const usersTable = document.getElementById('usersTable');
-        const tableRows = usersTable.querySelectorAll('tbody tr');
+$(document).ready(function() {
+    // 添加用户按钮
+    $('#addUserBtn').click(function() {
+        $('#addUserModal').modal('show');
+    });
+    
+    // 编辑用户按钮
+    $('.edit-user-btn').click(function() {
+        var userId = $(this).data('user-id');
+        var username = $(this).data('username');
+        var email = $(this).data('email');
+        var role = $(this).data('role');
         
-        userSearchInput.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            
-            tableRows.forEach(row => {
-                const username = row.querySelector('.user-name').textContent.toLowerCase();
-                const email = row.querySelector('.user-email').textContent.toLowerCase();
-                const userId = row.dataset.userId;
-                
-                if (username.includes(searchTerm) || email.includes(searchTerm) || userId.includes(searchTerm)) {
-                    row.style.display = '';
+        $('#edit_user_id').val(userId);
+        $('#edit_username').val(username);
+        $('#edit_email').val(email);
+        $('#edit_password').val(''); // 密码字段留空
+        $('#edit_role').val(role);
+        
+        $('#editUserModal').modal('show');
+    });
+    
+    // 删除用户按钮
+    $('.delete-user-btn').click(function() {
+        var userId = $(this).data('user-id');
+        $('#delete_user_id').val(userId);
+        $('#deleteUserModal').modal('show');
+    });
+    
+    // 禁用用户按钮
+    $('.ban-user-btn').click(function() {
+        var userId = $(this).data('user-id');
+        $.ajax({
+            url: '{{ url_for("admin_users") }}',
+            type: 'POST',
+            data: {
+                csrf_token: '{{ csrf_token() }}',
+                action: 'toggle_status',
+                user_id: userId,
+                is_active: false
+            },
+            success: function(response) {
+                if(response.success) {
+                    location.reload();
                 } else {
-                    row.style.display = 'none';
+                    alert('操作失败: ' + response.message);
                 }
-            });
-        });
-        
-        clearSearchBtn.addEventListener('click', function() {
-            userSearchInput.value = '';
-            tableRows.forEach(row => {
-                row.style.display = '';
-            });
-        });
-        
-        // 过滤器按钮
-        const filterBtns = document.querySelectorAll('.filter-btn');
-        
-        filterBtns.forEach(btn => {
-            btn.addEventListener('click', function() {
-                filterBtns.forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                
-                const filter = this.dataset.filter;
-                
-                tableRows.forEach(row => {
-                    const role = row.dataset.role;
-                    
-                    if (filter === 'all') {
-                        row.style.display = '';
-                    } else if (filter === 'admin' && role === 'admin') {
-                        row.style.display = '';
-                    } else if (filter === 'recent') {
-                        // 这里应该根据实际逻辑来筛选最近注册的用户
-                        row.style.display = '';
-                    } else if (filter === 'active') {
-                        // 这里应该根据实际逻辑来筛选活跃用户
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
-                    }
-                });
-            });
-        });
-        
-        // 批量选择功能
-        const selectAllCheckbox = document.getElementById('selectAllUsers');
-        const userCheckboxes = document.querySelectorAll('.user-checkbox');
-        const bulkActions = document.getElementById('bulkActions');
-        const selectedCountSpan = document.getElementById('selectedCount');
-        const cancelSelectionBtn = document.getElementById('cancelSelection');
-        
-        function updateBulkActions() {
-            const selectedCount = document.querySelectorAll('.user-checkbox:checked').length;
-            selectedCountSpan.textContent = selectedCount;
-            
-            if (selectedCount > 0) {
-                bulkActions.classList.add('show');
-            } else {
-                bulkActions.classList.remove('show');
             }
-        }
-        
-        selectAllCheckbox.addEventListener('change', function() {
-            userCheckboxes.forEach(checkbox => {
-                checkbox.checked = this.checked;
-            });
-            
-            updateBulkActions();
-        });
-        
-        userCheckboxes.forEach(checkbox => {
-            checkbox.addEventListener('change', function() {
-                const allChecked = Array.from(userCheckboxes).every(cb => cb.checked);
-                const anyChecked = Array.from(userCheckboxes).some(cb => cb.checked);
-                
-                selectAllCheckbox.checked = allChecked;
-                
-                updateBulkActions();
-            });
-        });
-        
-        cancelSelectionBtn.addEventListener('click', function() {
-            selectAllCheckbox.checked = false;
-            userCheckboxes.forEach(checkbox => {
-                checkbox.checked = false;
-            });
-            
-            updateBulkActions();
-        });
-        
-        // 批量操作按钮
-        const bulkActivateBtn = document.getElementById('bulkActivateBtn');
-        const bulkDeactivateBtn = document.getElementById('bulkDeactivateBtn');
-        const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
-        
-        bulkActivateBtn.addEventListener('click', function() {
-            const selectedUserIds = Array.from(document.querySelectorAll('.user-checkbox:checked'))
-                .map(checkbox => checkbox.id.replace('user', ''));
-            
-            if (selectedUserIds.length === 0) return;
-            
-            if (confirm(`确定要启用选中的 ${selectedUserIds.length} 个用户吗？`)) {
-                // 发送批量启用请求
-                console.log('Activating users:', selectedUserIds);
-                // 这里应该发起实际的 AJAX 请求，并在成功后刷新页面
-            }
-        });
-        
-        bulkDeactivateBtn.addEventListener('click', function() {
-            const selectedUserIds = Array.from(document.querySelectorAll('.user-checkbox:checked'))
-                .map(checkbox => checkbox.id.replace('user', ''));
-            
-            if (selectedUserIds.length === 0) return;
-            
-            if (confirm(`确定要禁用选中的 ${selectedUserIds.length} 个用户吗？`)) {
-                // 发送批量禁用请求
-                console.log('Deactivating users:', selectedUserIds);
-                // 这里应该发起实际的 AJAX 请求，并在成功后刷新页面
-            }
-        });
-        
-        bulkDeleteBtn.addEventListener('click', function() {
-            const selectedUserIds = Array.from(document.querySelectorAll('.user-checkbox:checked'))
-                .map(checkbox => checkbox.id.replace('user', ''));
-            
-            if (selectedUserIds.length === 0) return;
-            
-            if (confirm(`确定要删除选中的 ${selectedUserIds.length} 个用户吗？此操作不可恢复！`)) {
-                // 发送批量删除请求
-                console.log('Deleting users:', selectedUserIds);
-                // 这里应该发起实际的 AJAX 请求，并在成功后刷新页面
-            }
-        });
-        
-        // 单个用户操作按钮
-        const editUserBtns = document.querySelectorAll('.edit-user-btn');
-        const banUserBtns = document.querySelectorAll('.ban-user-btn');
-        const activateUserBtns = document.querySelectorAll('.activate-user-btn');
-        const deleteUserBtns = document.querySelectorAll('.delete-user-btn');
-        
-        editUserBtns.forEach(btn => {
-            btn.addEventListener('click', function() {
-                const userId = this.dataset.userId;
-                console.log('Editing user:', userId);
-                // 这里应该打开编辑用户的模态框，并加载用户数据
-            });
-        });
-        
-        banUserBtns.forEach(btn => {
-            btn.addEventListener('click', function() {
-                const userId = this.dataset.userId;
-                
-                if (confirm('确定要禁用此用户吗？')) {
-                    console.log('Banning user:', userId);
-                    // 这里应该发起实际的 AJAX 请求，并在成功后刷新页面
-                }
-            });
-        });
-        
-        activateUserBtns.forEach(btn => {
-            btn.addEventListener('click', function() {
-                const userId = this.dataset.userId;
-                
-                if (confirm('确定要启用此用户吗？')) {
-                    console.log('Activating user:', userId);
-                    // 这里应该发起实际的 AJAX 请求，并在成功后刷新页面
-                }
-            });
-        });
-        
-        deleteUserBtns.forEach(btn => {
-            btn.addEventListener('click', function() {
-                const userId = this.dataset.userId;
-                
-                if (confirm('确定要删除此用户吗？此操作不可恢复！')) {
-                    console.log('Deleting user:', userId);
-                    // 这里应该发起实际的 AJAX 请求，并在成功后刷新页面
-                }
-            });
         });
     });
+    
+    // 启用用户按钮
+    $('.activate-user-btn').click(function() {
+        var userId = $(this).data('user-id');
+        $.ajax({
+            url: '{{ url_for("admin_users") }}',
+            type: 'POST',
+            data: {
+                csrf_token: '{{ csrf_token() }}',
+                action: 'toggle_status',
+                user_id: userId,
+                is_active: true
+            },
+            success: function(response) {
+                if(response.success) {
+                    location.reload();
+                } else {
+                    alert('操作失败: ' + response.message);
+                }
+            }
+        });
+    });
+    
+    // 全选/取消全选复选框
+    $('#selectAllUsers').change(function() {
+        $('.user-checkbox').prop('checked', $(this).prop('checked'));
+        updateBulkActions();
+    });
+    
+    // 单个复选框
+    $('.user-checkbox').change(function() {
+        updateBulkActions();
+    });
+    
+    // 更新批量操作区域
+    function updateBulkActions() {
+        var selectedCount = $('.user-checkbox:checked').length;
+        $('#selectedCount').text(selectedCount);
+        
+        if(selectedCount > 0) {
+            $('#bulkActions').addClass('show');
+        } else {
+            $('#bulkActions').removeClass('show');
+        }
+    }
+    
+    // 取消选择按钮
+    $('#cancelSelection').click(function() {
+        $('.user-checkbox, #selectAllUsers').prop('checked', false);
+        updateBulkActions();
+    });
+    
+    // 批量启用按钮
+    $('#bulkActivateBtn').click(function() {
+        var userIds = [];
+        $('.user-checkbox:checked').each(function() {
+            userIds.push($(this).closest('tr').data('user-id'));
+        });
+        
+        $('#bulk_action_type').val('bulk_activate');
+        $('#bulk_user_ids').val(userIds.join(','));
+        $('#bulkActionTitle').text('批量启用用户');
+        $('#bulkActionMessage').text('确定要启用选中的 ' + userIds.length + ' 个用户吗？');
+        $('#confirmBulkAction').removeClass('btn-danger').addClass('btn-primary');
+        
+        $('#bulkActionModal').modal('show');
+    });
+    
+    // 批量禁用按钮
+    $('#bulkDeactivateBtn').click(function() {
+        var userIds = [];
+        $('.user-checkbox:checked').each(function() {
+            userIds.push($(this).closest('tr').data('user-id'));
+        });
+        
+        $('#bulk_action_type').val('bulk_deactivate');
+        $('#bulk_user_ids').val(userIds.join(','));
+        $('#bulkActionTitle').text('批量禁用用户');
+        $('#bulkActionMessage').text('确定要禁用选中的 ' + userIds.length + ' 个用户吗？');
+        $('#confirmBulkAction').removeClass('btn-danger').addClass('btn-primary');
+        
+        $('#bulkActionModal').modal('show');
+    });
+    
+    // 批量删除按钮
+    $('#bulkDeleteBtn').click(function() {
+        var userIds = [];
+        $('.user-checkbox:checked').each(function() {
+            userIds.push($(this).closest('tr').data('user-id'));
+        });
+        
+        $('#bulk_action_type').val('bulk_delete');
+        $('#bulk_user_ids').val(userIds.join(','));
+        $('#bulkActionTitle').text('批量删除用户');
+        $('#bulkActionMessage').text('确定要删除选中的 ' + userIds.length + ' 个用户吗？此操作不可撤销！');
+        $('#confirmBulkAction').removeClass('btn-primary').addClass('btn-danger');
+        
+        $('#bulkActionModal').modal('show');
+    });
+    
+    // 搜索功能
+    $('#userSearchInput').keyup(function(e) {
+        if(e.keyCode === 13) { // 回车键
+            var query = $(this).val().trim();
+            if(query) {
+                window.location.href = '{{ url_for("admin_users") }}?q=' + encodeURIComponent(query);
+            }
+        }
+    });
+    
+    // 清除搜索
+    $('#clearSearch').click(function() {
+        window.location.href = '{{ url_for("admin_users") }}';
+    });
+    
+    // 角色过滤
+    $('.filter-btn').click(function() {
+        $('.filter-btn').removeClass('active');
+        $(this).addClass('active');
+        
+        var filter = $(this).data('filter');
+        var url = '{{ url_for("admin_users") }}';
+        
+        if(filter !== 'all') {
+            url += '?role=' + filter;
+        }
+        
+        window.location.href = url;
+    });
+});
 </script>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/admin-users.js') }}"></script>
 {% endblock %} 

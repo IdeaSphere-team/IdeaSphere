@@ -4,6 +4,7 @@
 
 from src.db_ext import db
 from datetime import datetime
+from werkzeug.security import generate_password_hash
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -19,6 +20,10 @@ class User(db.Model):
     reports = db.relationship('Report', foreign_keys='Report.reporter_id', backref='reporter', lazy=True)
     reports_handled = db.relationship('Report', foreign_keys='Report.handler_id', backref='handler', lazy=True)
     likes = db.relationship('Like', backref='user', lazy=True)
+    
+    def set_password(self, password):
+        """设置用户密码"""
+        self.password = generate_password_hash(password)
 
 
 class Section(db.Model):
@@ -27,6 +32,8 @@ class Section(db.Model):
     description = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     order = db.Column(db.Integer, default=0)
+    icon = db.Column(db.String(50), default='layer-group')
+    icon_color = db.Column(db.String(50), default='#5e72e4')
     posts = db.relationship('Post', backref='section', lazy=True)
     parent_id = db.Column(db.Integer, db.ForeignKey('section.id'), nullable=True)
     children = db.relationship('Section', backref=db.backref('parent', remote_side=[id]), lazy=True)
@@ -58,6 +65,7 @@ class Post(db.Model):
     comments = db.relationship('Comment', backref='post', lazy=True)
     reports = db.relationship('Report', backref='post', lazy=True)
     likes = db.relationship('Like', backref='post', lazy=True)
+    views = db.relationship('View', backref='post', lazy=True)
     is_pinned = db.Column(db.Boolean, default=False)
     deleted = db.Column(db.Boolean, default=False)
 
@@ -99,6 +107,15 @@ class Like(db.Model):
     type = db.Column(db.String(20), nullable=False)  # post or comment
 
 
+class View(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # 可能是匿名访问
+    ip_address = db.Column(db.String(50), nullable=True)
+    user_agent = db.Column(db.String(255), nullable=True)
+
+
 class SearchModel(db.Model):
     table_name = 'search_keywords'
     id = db.Column(db.Integer, primary_key=True)
@@ -108,3 +125,26 @@ class SearchModel(db.Model):
 class InstallationStatus(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     is_installed = db.Column(db.Boolean, default=False)
+
+
+# 增加系统设置模型
+class SystemSetting(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    key = db.Column(db.String(100), unique=True, nullable=False)
+    value = db.Column(db.Text, nullable=True)
+    type = db.Column(db.String(20), default='string')  # string, int, bool, json
+    description = db.Column(db.String(255), nullable=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+
+
+# 增加系统日志模型
+class SystemLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    level = db.Column(db.String(20), nullable=False)  # debug, info, warning, error
+    source = db.Column(db.String(50), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    ip_address = db.Column(db.String(50), nullable=True)
+    stack_trace = db.Column(db.Text, nullable=True)

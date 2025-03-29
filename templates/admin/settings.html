@@ -16,22 +16,22 @@
             <div class="settings-nav">
                 <ul class="nav nav-tabs flex-column" id="settingsTabs" role="tablist">
                     <li class="nav-item">
-                        <a class="nav-link active" id="site-info-tab" data-toggle="tab" href="#site-info" role="tab">
+                        <a class="nav-link active" id="site-info-tab" data-bs-toggle="tab" href="#site-info" role="tab">
                             <i class="fas fa-info-circle"></i> 网站信息
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" id="function-tab" data-toggle="tab" href="#function" role="tab">
+                        <a class="nav-link" id="function-tab" data-bs-toggle="tab" href="#function" role="tab">
                             <i class="fas fa-toggle-on"></i> 功能设置
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" id="security-tab" data-toggle="tab" href="#security" role="tab">
+                        <a class="nav-link" id="security-tab" data-bs-toggle="tab" href="#security" role="tab">
                             <i class="fas fa-shield-alt"></i> 安全设置
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" id="upload-tab" data-toggle="tab" href="#upload" role="tab">
+                        <a class="nav-link" id="upload-tab" data-bs-toggle="tab" href="#upload" role="tab">
                             <i class="fas fa-upload"></i> 上传设置
                         </a>
                     </li>
@@ -42,7 +42,7 @@
         <div class="col-md-9">
             <div class="tab-content" id="settingsTabContent">
                 <!-- 网站信息设置 -->
-                <div class="tab-pane fade show active" id="site-info" role="tabpanel">
+                <div class="tab-pane fade show active" id="site-info" role="tabpanel" aria-labelledby="site-info-tab">
                     <div class="card">
                         <div class="card-header">
                             <h5><i class="fas fa-info-circle"></i> 网站基本信息</h5>
@@ -78,7 +78,7 @@
                 </div>
 
                 <!-- 功能设置 -->
-                <div class="tab-pane fade" id="function" role="tabpanel">
+                <div class="tab-pane fade" id="function" role="tabpanel" aria-labelledby="function-tab">
                     <div class="card">
                         <div class="card-header">
                             <h5><i class="fas fa-toggle-on"></i> 网站功能开关</h5>
@@ -121,7 +121,7 @@
                 </div>
 
                 <!-- 安全设置 -->
-                <div class="tab-pane fade" id="security" role="tabpanel">
+                <div class="tab-pane fade" id="security" role="tabpanel" aria-labelledby="security-tab">
                     <div class="card">
                         <div class="card-header">
                             <h5><i class="fas fa-shield-alt"></i> 安全配置</h5>
@@ -159,7 +159,7 @@
                 </div>
 
                 <!-- 上传设置 -->
-                <div class="tab-pane fade" id="upload" role="tabpanel">
+                <div class="tab-pane fade" id="upload" role="tabpanel" aria-labelledby="upload-tab">
                     <div class="card">
                         <div class="card-header">
                             <h5><i class="fas fa-upload"></i> 网站Logo与图标</h5>
@@ -211,6 +211,35 @@
 {% block scripts %}
 <script>
 $(document).ready(function() {
+    // 初始化Bootstrap 5标签页
+    const triggerTabList = [].slice.call(document.querySelectorAll('#settingsTabs a'));
+    triggerTabList.forEach(function(triggerEl) {
+        const tabTrigger = new bootstrap.Tab(triggerEl);
+        
+        triggerEl.addEventListener('click', function(event) {
+            event.preventDefault();
+            tabTrigger.show();
+        });
+    });
+    
+    // 如果URL中包含标签标识符，激活相应标签
+    var hash = window.location.hash;
+    if (hash) {
+        const triggerEl = document.querySelector('#settingsTabs a[href="' + hash + '"]');
+        if (triggerEl) {
+            const tab = new bootstrap.Tab(triggerEl);
+            tab.show();
+        }
+    }
+    
+    // 标签切换时更新URL哈希
+    const tabEls = document.querySelectorAll('a[data-bs-toggle="tab"]');
+    tabEls.forEach(function(tabEl) {
+        tabEl.addEventListener('shown.bs.tab', function() {
+            history.pushState(null, null, tabEl.getAttribute('href'));
+        });
+    });
+    
     // 表单文件选择显示文件名
     $('.custom-file-input').on('change', function() {
         var fileName = $(this).val().split('\\').pop();

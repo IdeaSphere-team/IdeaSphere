@@ -1,25 +1,55 @@
 import os
+import re
+import time
+import json
 import yaml
-from flask import Flask, request, session, redirect, url_for, g
+import random
+import uuid
+import string
+import hashlib
+import bleach
+import datetime
+from functools import wraps
+from datetime import datetime, timedelta
+from flask import Flask, flash, render_template, request, redirect, url_for, jsonify, g, session, abort, make_response, send_file
+from werkzeug.utils import secure_filename
 from flask_wtf.csrf import CSRFProtect
 from src.db_ext import db
-from src.functions.database.models import User, Post, Comment
+from src.functions.database.models import User, Post, Comment, Section, Report, Like, SearchModel, InstallationStatus, SystemSetting, SystemLog
 from src.functions.icenter.db_operation import execute_sql_logic
 from src.functions.index import index_logic
 from src.functions.parser.markdown_parser import remove_markdown
 from src.functions.perm.permission_groups import permission_group_logic
-from src.functions.service.admin import admin_panel_logic, manage_reports_logic, manage_users_logic, manage_posts_logic, delete_post_logic
+from src.functions.service.admin import admin_panel_logic, manage_users_logic, manage_posts_logic, delete_post_logic, toggle_user_status_logic, bulk_users_action_logic, view_user_detail_logic, delete_user_logic
 from src.functions.service.intstall import install_logic
 from src.functions.service.post_logic import create_post_logic, view_post_logic
 from src.functions.service.search import search_logic
 from src.functions.service.user_logic import register_logic, login_logic, logout_logic
-from src.functions.service.user_operations import report_post_logic, like_post_logic, report_comment_logic, like_comment_logic, upgrade_user_logic, downgrade_user_logic, handle_report_logic, edit_post_logic
+from src.functions.service.user_operations import like_post_logic, like_comment_logic, upgrade_user_logic, downgrade_user_logic, edit_post_logic
 from src.functions.service.section_logic import section_list_logic, section_detail_logic, create_section_logic, edit_section_logic, delete_section_logic, section_dashboard_logic
 from src.functions.icenter.icenter_index_page import icenter_index
 from src.functions.icenter.icenter_login import icenter_login_logic
 from src.functions.icenter.index_logic_for_icenter import return_icenter_index_templates, return_icenter_execute_sql_templates
 from src.functions.api.api import api_bp  # 导入API蓝图
 from src.functions.service.manage_comments import manage_comments_logic, api_delete_comment, api_restore_comment, api_bulk_delete_comments
+from src.functions.service.manage_posts import manage_posts_logic, api_delete_post, api_restore_post, api_pin_post, api_bulk_actions, api_post_stats, api_export_post_stats, delete_post, restore_post, pin_post
+
+# 定义装饰器
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if g.user is None:
+            return redirect(url_for('login', next=request.url))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if g.user is None or g.user.role != 'admin':
+            abort(403)
+        return f(*args, **kwargs)
+    return decorated_function
 
 """
 初始化部分   
@@ -41,10 +71,14 @@ csrf = CSRFProtect(app)
 app.register_blueprint(api_bp, url_prefix='/api')
 
 def get_config():
+    """读取配置文件"""
     config_path = 'config.yml'
     if not os.path.exists(config_path):
+        # 如果配置文件不存在，创建默认配置
         with open(config_path, 'w') as f:
             yaml.dump({'port': 5000, 'debug': True}, f)  # 默认配置
+    
+    # 读取配置文件
     with open(config_path, 'r') as f:
         return yaml.safe_load(f)
 
@@ -159,29 +193,57 @@ def view_post(post_id):
 def admin_panel():
     return admin_panel_logic()
 
-@app.route('/admin/users')
+@app.route('/admin/users', methods=['GET', 'POST'])
 def admin_users():
     return manage_users_logic()
 
-@app.route('/admin/reports')
-def admin_reports():
-    return manage_reports_logic()
+@app.route('/admin/users/<int:user_id>', methods=['GET'])
+def admin_user_detail(user_id):
+    return view_user_detail_logic(user_id)
 
-@app.route('/admin/posts')
+@app.route('/admin/users/<int:user_id>', methods=['DELETE'])
+def admin_user_delete(user_id):
+    return delete_user_logic(user_id)
+
+@app.route('/admin/users/<int:user_id>/status', methods=['POST'])
+def admin_user_status(user_id):
+    return toggle_user_status_logic(user_id)
+
+@app.route('/admin/users/bulk-action', methods=['POST'])
+def admin_users_bulk_action():
+    return bulk_users_action_logic()
+
+@app.route('/admin/posts', methods=['GET'])
+@login_required
+@admin_required
 def admin_posts():
+    """帖子管理页面"""
     return manage_posts_logic()
+
+@app.route('/admin/post/delete', methods=['POST'])
+@login_required
+@admin_required
+def admin_delete_post():
+    """删除帖子"""
+    return delete_post()
+
+@app.route('/admin/post/restore', methods=['POST'])
+@login_required
+@admin_required
+def admin_restore_post():
+    """恢复帖子"""
+    return restore_post()
+
+@app.route('/admin/post/pin', methods=['POST'])
+@login_required
+@admin_required
+def admin_pin_post():
+    """置顶/取消置顶帖子"""
+    return pin_post()
 
 @app.route('/admin/comments')
 def manage_comments():
     return manage_comments_logic()
-
-@app.route('/report_post/<int:post_id>', methods=['POST'])
-def report_post(post_id):
-    return report_post_logic(post_id)
-
-@app.route('/report_comment/<int:comment_id>', methods=['POST'])
-def report_comment(comment_id):
-    return report_comment_logic(comment_id)
 
 @app.route('/like_post/<int:post_id>', methods=['POST'])
 def like_post(post_id):
@@ -198,10 +260,6 @@ def upgrade_user(user_id):
 @app.route('/downgrade_user/<int:user_id>')
 def downgrade_user(user_id):
     return downgrade_user_logic(user_id)
-
-@app.route('/handle_report/<int:report_id>', methods=['POST'])
-def handle_report(report_id):
-    return handle_report_logic(report_id)
 
 @app.route('/search/<keywords>', methods=['GET'])
 def search(keywords):
@@ -383,87 +441,125 @@ def api_export_logs():
     return api_export_logs()
 
 # 帖子管理API
-@app.route('/api/admin/delete_post', methods=['POST'])
-def api_delete_post():
-    if not g.user or g.user.role not in ['admin', 'moderator']:
-        return jsonify({'success': False, 'message': '无权操作'}), 403
+@app.route('/api/admin/posts/action', methods=['POST'])
+@login_required
+@admin_required
+def post_action_api():
+    """帖子操作API"""
+    action = request.form.get('action')
     
-    from src.functions.service.manage_posts import api_delete_post
-    
-    return api_delete_post()
+    if action == 'delete_post':
+        return api_delete_post()
+    elif action == 'restore_post':
+        return api_restore_post()
+    elif action == 'pin_post':
+        return api_pin_post()
+    elif action == 'permanent_delete_post':
+        # 永久删除需要额外的权限检查
+        return api_delete_post()
+    else:
+        return jsonify(success=False, message="不支持的操作")
 
-@app.route('/api/admin/restore_post', methods=['POST'])
-def api_restore_post():
-    if not g.user or g.user.role not in ['admin', 'moderator']:
-        return jsonify({'success': False, 'message': '无权操作'}), 403
-    
-    from src.functions.service.manage_posts import api_restore_post
-    
-    return api_restore_post()
+# 评论管理API
+@app.route('/api/admin/delete_comment', methods=['POST'])
+@login_required
+@admin_required
+def admin_delete_comment_api():
+    """删除评论API"""
+    return api_delete_comment()
 
-@app.route('/api/admin/pin_post', methods=['POST'])
-def api_pin_post():
-    if not g.user or g.user.role not in ['admin', 'moderator']:
-        return jsonify({'success': False, 'message': '无权操作'}), 403
-    
-    from src.functions.service.manage_posts import api_pin_post
-    
-    return api_pin_post()
+@app.route('/api/admin/restore_comment', methods=['POST'])
+@login_required
+@admin_required
+def admin_restore_comment_api():
+    """恢复评论API"""
+    return api_restore_comment()
 
-@app.route('/api/admin/bulk_delete_posts', methods=['POST'])
-def api_bulk_delete_posts():
-    if not g.user or g.user.role not in ['admin', 'moderator']:
-        return jsonify({'success': False, 'message': '无权操作'}), 403
-    
-    from src.functions.service.manage_posts import api_bulk_delete_posts
-    
-    return api_bulk_delete_posts()
+@app.route('/api/admin/bulk_delete_comments', methods=['POST'])
+@login_required
+@admin_required
+def admin_bulk_delete_comments_api():
+    """批量删除评论API"""
+    return api_bulk_delete_comments()
 
-@app.route('/api/admin/bulk_pin_posts', methods=['POST'])
-def api_bulk_pin_posts():
-    if not g.user or g.user.role not in ['admin', 'moderator']:
-        return jsonify({'success': False, 'message': '无权操作'}), 403
-    
-    from src.functions.service.manage_posts import api_bulk_pin_posts
-    
-    return api_bulk_pin_posts()
+@app.route('/api/admin/posts/bulk', methods=['POST'])
+@login_required
+@admin_required
+def posts_bulk_api():
+    """批量操作帖子API"""
+    return api_bulk_actions()
 
-# 举报管理API
-@app.route('/api/admin/report_detail')
-def api_report_detail():
-    if not g.user or g.user.role not in ['admin', 'moderator']:
-        return jsonify({'success': False, 'message': '无权操作'}), 403
-    
-    from src.functions.service.manage_reports import api_get_report_detail
-    
-    return api_get_report_detail()
+@app.route('/api/admin/posts/<int:post_id>/stats', methods=['GET'])
+@login_required
+@admin_required
+def post_stats_api(post_id):
+    """获取帖子统计数据API"""
+    return api_post_stats(post_id)
 
-@app.route('/api/admin/process_report', methods=['POST'])
-def api_process_report():
-    if not g.user or g.user.role not in ['admin', 'moderator']:
-        return jsonify({'success': False, 'message': '无权操作'}), 403
+@app.route('/api/admin/posts/stats/export', methods=['GET'])
+@login_required
+@admin_required
+def export_posts_stats_api():
+    """导出帖子统计数据API"""
+    period = request.args.get('period', 'week')
+    year = request.args.get('year')
+    month = request.args.get('month')
     
-    from src.functions.service.manage_reports import api_process_report
+    # 获取统计数据
+    if year:
+        chart_data = get_chart_data(year=int(year), month=int(month) if month else None)
+    else:
+        chart_data = get_historical_stats(period=period)
     
-    return api_process_report()
-
-@app.route('/api/admin/delete_reported_content', methods=['POST'])
-def api_delete_reported_content():
-    if not g.user or g.user.role not in ['admin', 'moderator']:
-        return jsonify({'success': False, 'message': '无权操作'}), 403
+    # 生成CSV数据
+    import csv
+    from io import StringIO
     
-    from src.functions.service.manage_reports import api_delete_reported_content
+    output = StringIO()
+    writer = csv.writer(output)
     
-    return api_delete_reported_content()
-
-@app.route('/api/admin/bulk_process_reports', methods=['POST'])
-def api_bulk_process_reports():
-    if not g.user or g.user.role not in ['admin', 'moderator']:
-        return jsonify({'success': False, 'message': '无权操作'}), 403
+    # 写入标题
+    writer.writerow(['IdeaSphere论坛帖子统计数据'])
+    writer.writerow([])
     
-    from src.functions.service.manage_reports import api_bulk_process_reports
+    # 写入导出时间
+    writer.writerow(['导出时间', datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')])
+    writer.writerow([])
     
-    return api_bulk_process_reports()
+    # 写入统计时间范围
+    if year:
+        if month:
+            period_str = f"{year}年{month}月"
+        else:
+            period_str = f"{year}年"
+    else:
+        period_map = {
+            'week': '最近7天',
+            'month': '最近30天',
+            'year': '最近12个月'
+        }
+        period_str = period_map.get(period, '自定义')
+    
+    writer.writerow(['统计周期', period_str])
+    writer.writerow([])
+    
+    # 写入趋势数据
+    writer.writerow(['日期', '帖子', '评论', '浏览', '点赞'])
+    for i in range(len(chart_data['labels'])):
+        writer.writerow([
+            chart_data['labels'][i],
+            chart_data['data']['posts'][i],
+            chart_data['data']['comments'][i],
+            chart_data['data']['views'][i],
+            chart_data['data']['likes'][i]
+        ])
+    
+    # 创建响应对象
+    response = make_response(output.getvalue())
+    response.headers['Content-Disposition'] = f'attachment; filename=posts_stats_{period_str.replace(" ", "_")}.csv'
+    response.headers['Content-type'] = 'text/csv'
+    
+    return response
 
 # 添加API完整的管理页面路由
 @app.route('/admin/settings')

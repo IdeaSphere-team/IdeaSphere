@@ -44,8 +44,10 @@ def create_section_logic():
     if request.method == 'POST':
         name = request.form.get('name')
         description = request.form.get('description')
-        icon = request.form.get('icon', 'fas fa-comments')
-        order = request.form.get('order', 0, type=int)
+        icon = request.form.get('icon', 'layer-group')
+        icon_color = request.form.get('icon_color', '#5e72e4')
+        sort_order = request.form.get('sort_order', 0, type=int)
+        is_active = True if request.form.get('is_active') else False
         
         # 验证版块名是否已存在
         if Section.query.filter_by(name=name).first():
@@ -55,7 +57,9 @@ def create_section_logic():
             name=name,
             description=description,
             icon=icon,
-            order=order
+            icon_color=icon_color,
+            order=sort_order,
+            is_active=is_active
         )
         
         db.session.add(new_section)
@@ -77,7 +81,9 @@ def edit_section_logic(section_id):
         name = request.form.get('name')
         description = request.form.get('description')
         icon = request.form.get('icon')
-        order = request.form.get('order', type=int)
+        icon_color = request.form.get('icon_color')
+        sort_order = request.form.get('sort_order', type=int)
+        is_active = True if request.form.get('is_active') else False
         
         # 验证版块名是否已存在(排除当前正在编辑的版块)
         existing = Section.query.filter(Section.name == name, Section.id != section_id).first()
@@ -90,8 +96,11 @@ def edit_section_logic(section_id):
             section.description = description
         if icon:
             section.icon = icon
-        if order is not None:
-            section.order = order
+        if icon_color:
+            section.icon_color = icon_color
+        if sort_order is not None:
+            section.order = sort_order
+        section.is_active = is_active
             
         db.session.commit()
         return jsonify({'success': True, 'message': '版块更新成功'})

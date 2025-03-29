@@ -1,0 +1,726 @@
+{% extends "admin/base.html" %}
+
+{% block title %}评论管理 - IdeaSphere 管理后台{% endblock %}
+
+{% block head_extra %}
+<link href="{{ url_for('static', filename='css/admin-posts.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block custom_css %}
+/* 确保这些样式只影响主内容区域，不影响侧边栏 */
+.admin-main .stats-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.admin-main .stats-card {
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.admin-main .stats-card-value {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: #344767;
+    margin-bottom: 0.25rem;
+}
+
+.admin-main .stats-card-label {
+    font-size: 0.875rem;
+    color: #67748e;
+}
+
+.admin-main .stats-card-icon {
+    margin-left: auto;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background-color: rgba(45, 206, 137, 0.1);
+    color: #2dce89;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+.admin-main .function-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    gap: 1rem;
+    background-color: white;
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.admin-main .search-box {
+    position: relative;
+    flex: 1;
+    min-width: 240px;
+}
+
+.admin-main .search-box input {
+    padding: 0.625rem 1rem 0.625rem 2.5rem;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    width: 100%;
+}
+
+.admin-main .search-box i {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #a0aec0;
+}
+
+.admin-main .search-box button {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #a0aec0;
+    cursor: pointer;
+}
+
+.admin-main .filter-dropdown {
+    position: relative;
+}
+
+.admin-main .filter-dropdown .dropdown-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1rem;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    background-color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.admin-main .filter-dropdown:hover .dropdown-menu {
+    display: block;
+}
+
+.admin-main .dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    min-width: 180px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 0.5rem 0;
+    z-index: 100;
+}
+
+.admin-main .dropdown-item {
+    display: block;
+    padding: 0.5rem 1rem;
+    color: #67748e;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.admin-main .dropdown-item:hover {
+    background-color: #f8f9fa;
+}
+
+.admin-main .dropdown-item.active {
+    background-color: #263849;
+    color: white;
+}
+
+.admin-main .bulk-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.admin-main .bulk-actions span {
+    font-size: 0.875rem;
+    color: #67748e;
+}
+
+.admin-main .card {
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+.admin-main .card-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.admin-main .card-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #344767;
+}
+
+.admin-main .table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.admin-main .table th, .admin-main .table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.admin-main .table th {
+    font-weight: 600;
+    color: #344767;
+    background-color: #f8f9fa;
+}
+
+.admin-main .table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.admin-main .deleted-row {
+    background-color: rgba(251, 99, 64, 0.05);
+}
+
+.admin-main .comment-content {
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-main .badge {
+    display: inline-block;
+    padding: 0.35rem 0.7rem;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.admin-main .badge-success {
+    background-color: rgba(45, 206, 137, 0.1);
+    color: #2dce89;
+}
+
+.admin-main .badge-danger {
+    background-color: rgba(251, 99, 64, 0.1);
+    color: #fb6340;
+}
+
+.admin-main .btn-group {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.admin-main .btn-group .btn {
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    border: none;
+    cursor: pointer;
+}
+
+.admin-main .btn-sm {
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.75rem !important;
+}
+
+.admin-main .btn-danger {
+    background-color: #fb6340;
+    color: white;
+}
+
+.admin-main .btn-success {
+    background-color: #2dce89;
+    color: white;
+}
+
+.admin-main .btn-info {
+    background-color: #11cdef;
+    color: white;
+}
+
+.admin-main .btn-secondary {
+    background-color: #8392ab;
+    color: white;
+}
+
+.admin-main .modal {
+    display: none;
+}
+
+.admin-main .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.admin-main .pagination-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #67748e;
+    background-color: #f8f9fa;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.admin-main .pagination-btn:hover:not(.disabled) {
+    background-color: #e9ecef;
+    color: #344767;
+}
+
+.admin-main .pagination-btn.active {
+    background-color: #263849;
+    color: white;
+}
+
+.admin-main .pagination-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+@media (max-width: 991px) {
+    .admin-main .stats-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 767px) {
+    .admin-main .stats-cards {
+        grid-template-columns: 1fr;
+    }
+    
+    .admin-main .function-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .admin-main .comment-content {
+        max-width: 150px;
+    }
+}
+{% endblock %}
+
+{% block header_title %}评论管理{% endblock %}
+{% block header_subtitle %}管理论坛中的所有评论{% endblock %}
+
+{% block content %}
+<div class="admin-content">
+    <!-- 统计卡片 -->
+    <div class="stats-cards">
+        <div class="stats-card">
+            <div class="stats-card-value">{{ comment_count }}</div>
+            <div class="stats-card-label">总评论数</div>
+            <div class="stats-card-icon"><i class="fas fa-comments"></i></div>
+        </div>
+        <!-- 其他统计卡片 -->
+    </div>
+
+    <!-- 功能栏 -->
+    <div class="function-bar">
+        <div class="search-box">
+            <input type="text" id="commentSearch" placeholder="搜索评论..." value="{{ search_query }}">
+            <button type="button" id="searchBtn"><i class="fas fa-search"></i></button>
+        </div>
+        <div class="filter-dropdown">
+            <button class="dropdown-toggle">
+                筛选 <i class="fas fa-chevron-down"></i>
+            </button>
+            <div class="dropdown-menu">
+                <a href="{{ url_for('manage_comments', filter='all') }}" class="dropdown-item {% if filter == 'all' %}active{% endif %}">全部评论</a>
+                <a href="{{ url_for('manage_comments', filter='recent') }}" class="dropdown-item {% if filter == 'recent' %}active{% endif %}">最近评论</a>
+                <a href="{{ url_for('manage_comments', filter='reported') }}" class="dropdown-item {% if filter == 'reported' %}active{% endif %}">被举报的评论</a>
+                <a href="{{ url_for('manage_comments', filter='deleted') }}" class="dropdown-item {% if filter == 'deleted' %}active{% endif %}">已删除的评论</a>
+            </div>
+        </div>
+        <div class="bulk-actions" id="bulkActionsContainer" style="display: none;">
+            <span id="selectedCount">已选择 0 个评论</span>
+            <button class="btn btn-danger btn-sm" id="bulkDeleteBtn"><i class="fas fa-trash"></i> 批量删除</button>
+            <button class="btn btn-secondary btn-sm" id="bulkCancelBtn"><i class="fas fa-times"></i> 取消</button>
+        </div>
+    </div>
+
+    <!-- 评论列表 -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">评论列表</h3>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th width="40">
+                                <input type="checkbox" id="selectAllComments">
+                            </th>
+                            <th width="100">评论ID</th>
+                            <th width="150">发布者</th>
+                            <th>内容</th>
+                            <th width="150">发布时间</th>
+                            <th width="120">所属帖子</th>
+                            <th width="100">状态</th>
+                            <th width="120">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for comment in comments %}
+                        <tr data-comment-id="{{ comment.id }}" class="{% if comment.deleted %}deleted-row{% endif %}">
+                            <td>
+                                <input type="checkbox" class="comment-checkbox">
+                            </td>
+                            <td>{{ comment.id }}</td>
+                            <td>{{ comment.user.username }}</td>
+                            <td>
+                                <div class="comment-content">{{ comment.content }}</div>
+                            </td>
+                            <td>{{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>
+                                <a href="{{ url_for('view_post', post_id=comment.post_id) }}" target="_blank">
+                                    查看帖子
+                                </a>
+                            </td>
+                            <td>
+                                {% if comment.deleted %}
+                                <span class="badge badge-danger">已删除</span>
+                                {% else %}
+                                <span class="badge badge-success">正常</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    {% if not comment.deleted %}
+                                    <button type="button" class="btn btn-sm btn-danger delete-comment-btn" data-comment-id="{{ comment.id }}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    {% else %}
+                                    <button type="button" class="btn btn-sm btn-success restore-comment-btn" data-comment-id="{{ comment.id }}">
+                                        <i class="fas fa-undo"></i>
+                                    </button>
+                                    {% endif %}
+                                    <button type="button" class="btn btn-sm btn-info view-comment-btn" data-comment-id="{{ comment.id }}">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer">
+            <div class="pagination-info">
+                显示 {{ pagination.start }} 到 {{ pagination.end }} 条，共 {{ pagination.total }} 条记录
+            </div>
+            <div class="pagination">
+                <a href="{{ url_for('manage_comments', page=pagination.prev_page, filter=filter, q=search_query) }}" class="pagination-btn {% if not pagination.has_prev %}disabled{% endif %}">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+                {% for page_num in pagination.pages %}
+                    {% if page_num == pagination.page %}
+                    <a href="{{ url_for('manage_comments', page=page_num, filter=filter, q=search_query) }}" class="pagination-btn active">{{ page_num }}</a>
+                    {% else %}
+                    <a href="{{ url_for('manage_comments', page=page_num, filter=filter, q=search_query) }}" class="pagination-btn">{{ page_num }}</a>
+                    {% endif %}
+                {% endfor %}
+                <a href="{{ url_for('manage_comments', page=pagination.next_page, filter=filter, q=search_query) }}" class="pagination-btn {% if not pagination.has_next %}disabled{% endif %}">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 确认删除模态框 -->
+<div class="modal fade" id="deleteCommentModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">删除评论</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>确定要删除此评论吗？</p>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="permanentDelete">
+                    <label class="form-check-label" for="permanentDelete">
+                        永久删除 (此操作不可恢复)
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">删除</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 批量操作确认模态框 -->
+<div class="modal fade" id="bulkActionModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="bulkActionTitle">批量操作</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="bulkActionConfirmMessage">确定要执行此操作吗？</p>
+                <div class="form-check" id="bulkPermanentDeleteContainer">
+                    <input class="form-check-input" type="checkbox" id="bulkPermanentDelete">
+                    <label class="form-check-label" for="bulkPermanentDelete">
+                        永久删除 (此操作不可恢复)
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="confirmBulkAction">确定</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 查看评论详情模态框 -->
+<div class="modal fade" id="viewCommentModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">评论详情</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="comment-detail-content"></div>
+                <div class="comment-detail-info">
+                    <p><strong>评论ID:</strong> <span id="comment-id"></span></p>
+                    <p><strong>发布者:</strong> <span id="comment-user"></span></p>
+                    <p><strong>发布时间:</strong> <span id="comment-time"></span></p>
+                    <p><strong>所属帖子:</strong> <a id="comment-post-link" href="#" target="_blank">查看原帖</a></p>
+                    <p><strong>状态:</strong> <span id="comment-status"></span></p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // 单个评论操作
+    $('.delete-comment-btn').click(function() {
+        var commentId = $(this).data('comment-id');
+        $('#confirmDelete').data('comment-id', commentId);
+        $('#deleteCommentModal').modal('show');
+    });
+    
+    $('.restore-comment-btn').click(function() {
+        var commentId = $(this).data('comment-id');
+        restoreComment(commentId);
+    });
+    
+    $('.view-comment-btn').click(function() {
+        var commentId = $(this).data('comment-id');
+        var row = $(this).closest('tr');
+        var content = row.find('.comment-content').text();
+        var user = row.find('td:eq(2)').text();
+        var time = row.find('td:eq(4)').text();
+        var postId = row.find('td:eq(5) a').attr('href').split('/').pop();
+        var status = row.find('td:eq(6) .badge').text();
+        
+        $('#comment-id').text(commentId);
+        $('#comment-user').text(user);
+        $('#comment-time').text(time);
+        $('#comment-post-link').attr('href', `/post/${postId}`);
+        $('#comment-status').text(status);
+        $('.comment-detail-content').text(content);
+        
+        $('#viewCommentModal').modal('show');
+    });
+    
+    $('#confirmDelete').click(function() {
+        var commentId = $(this).data('comment-id');
+        var permanent = $('#permanentDelete').prop('checked');
+        deleteComment(commentId, permanent);
+        $('#deleteCommentModal').modal('hide');
+    });
+    
+    // 批量操作
+    $('#selectAllComments').change(function() {
+        $('.comment-checkbox').prop('checked', $(this).prop('checked'));
+        updateBulkActions();
+    });
+    
+    $('.comment-checkbox').change(function() {
+        updateBulkActions();
+    });
+    
+    $('#bulkDeleteBtn').click(function() {
+        $('#bulkActionTitle').text('批量删除评论');
+        $('#bulkActionConfirmMessage').text('确定要删除选中的评论吗？');
+        $('#bulkPermanentDeleteContainer').show();
+        $('#confirmBulkAction').data('action', 'delete');
+        $('#bulkActionModal').modal('show');
+    });
+    
+    $('#bulkCancelBtn').click(function() {
+        $('.comment-checkbox, #selectAllComments').prop('checked', false);
+        updateBulkActions();
+    });
+    
+    $('#confirmBulkAction').click(function() {
+        var action = $(this).data('action');
+        var permanent = $('#bulkPermanentDelete').prop('checked');
+        var selectedComments = [];
+        
+        $('.comment-checkbox:checked').each(function() {
+            var commentId = $(this).closest('tr').data('comment-id');
+            selectedComments.push(commentId);
+        });
+        
+        if (action == 'delete') {
+            bulkDeleteComments(selectedComments, permanent);
+        }
+        
+        $('#bulkActionModal').modal('hide');
+    });
+    
+    // 搜索功能
+    $('#commentSearch').keyup(function(e) {
+        if (e.key === 'Enter') {
+            searchComments();
+        }
+    });
+    
+    $('#searchBtn').click(function() {
+        searchComments();
+    });
+    
+    // 辅助函数
+    function updateBulkActions() {
+        var selectedCount = $('.comment-checkbox:checked').length;
+        $('#selectedCount').text('已选择 ' + selectedCount + ' 个评论');
+        
+        if (selectedCount > 0) {
+            $('#bulkActionsContainer').show();
+        } else {
+            $('#bulkActionsContainer').hide();
+        }
+    }
+    
+    function searchComments() {
+        var searchTerm = $('#commentSearch').val().trim();
+        if (searchTerm) {
+            window.location.href = "{{ url_for('manage_comments') }}?q=" + encodeURIComponent(searchTerm);
+        }
+    }
+    
+    function deleteComment(commentId, permanent) {
+        $.ajax({
+            url: "{{ url_for('admin_delete_comment_api') }}",
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                comment_id: commentId,
+                permanent: permanent
+            }),
+            success: function(response) {
+                if (response.success) {
+                    // 刷新页面或更新UI
+                    location.reload();
+                } else {
+                    alert('删除失败: ' + response.message);
+                }
+            },
+            error: function() {
+                alert('服务器错误，请稍后再试');
+            }
+        });
+    }
+    
+    function restoreComment(commentId) {
+        $.ajax({
+            url: "{{ url_for('admin_restore_comment_api') }}",
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                comment_id: commentId
+            }),
+            success: function(response) {
+                if (response.success) {
+                    // 刷新页面或更新UI
+                    location.reload();
+                } else {
+                    alert('恢复失败: ' + response.message);
+                }
+            },
+            error: function() {
+                alert('服务器错误，请稍后再试');
+            }
+        });
+    }
+    
+    function bulkDeleteComments(commentIds, permanent) {
+        $.ajax({
+            url: "{{ url_for('admin_bulk_delete_comments_api') }}",
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                comment_ids: commentIds,
+                permanent: permanent
+            }),
+            success: function(response) {
+                if (response.success) {
+                    // 刷新页面或更新UI
+                    location.reload();
+                } else {
+                    alert('批量删除失败: ' + response.message);
+                }
+            },
+            error: function() {
+                alert('服务器错误，请稍后再试');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

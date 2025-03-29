@@ -2,20 +2,482 @@
 
 {% block title %}版块管理 - IdeaSphere 管理后台{% endblock %}
 
+{% block head_extra %}
+<link href="{{ url_for('static', filename='css/admin-posts.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block custom_css %}
+/* 确保这些样式只影响主内容区域，不影响侧边栏 */
+.admin-main .stats-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.admin-main .stat-card {
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.admin-main .stat-card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background-color: rgba(45, 206, 137, 0.1);
+    color: #2dce89;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+.admin-main .stat-card-content {
+    flex: 1;
+    margin-left: 1rem;
+}
+
+.admin-main .stat-card-value {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: #344767;
+    margin-bottom: 0.25rem;
+}
+
+.admin-main .stat-card-label {
+    font-size: 0.875rem;
+    color: #67748e;
+}
+
+.admin-main .function-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    gap: 1rem;
+    background-color: white;
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.admin-main .search-box {
+    position: relative;
+    flex: 1;
+    min-width: 240px;
+}
+
+.admin-main .search-box input {
+    padding: 0.625rem 1rem 0.625rem 2.5rem;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    width: 100%;
+}
+
+.admin-main .search-box i {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #a0aec0;
+}
+
+.admin-main .filters {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.admin-main .dropdown {
+    position: relative;
+}
+
+.admin-main .dropdown-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1rem;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    background-color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.admin-main .dropdown:hover .dropdown-menu {
+    display: block;
+}
+
+.admin-main .dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    min-width: 180px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 0.5rem 0;
+    z-index: 100;
+}
+
+.admin-main .dropdown-item {
+    display: block;
+    padding: 0.5rem 1rem;
+    color: #67748e;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.admin-main .dropdown-item:hover {
+    background-color: #f8f9fa;
+}
+
+.admin-main .dropdown-item.active {
+    background-color: #263849;
+    color: white;
+}
+
+.admin-main .actions {
+    margin-left: auto;
+}
+
+.admin-main .section-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.admin-main .section-card {
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.admin-main .section-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+.admin-main .section-card-header {
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.admin-main .section-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: white;
+}
+
+.admin-main .section-header-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.admin-main .action-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #67748e;
+    background-color: #f8f9fa;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.admin-main .action-btn:hover {
+    background-color: #e9ecef;
+    color: #344767;
+}
+
+.admin-main .action-btn.delete-section-btn:hover {
+    background-color: #fb634010;
+    color: #fb6340;
+}
+
+.admin-main .section-card-body {
+    padding: 1.25rem;
+}
+
+.admin-main .section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #344767;
+    margin-bottom: 0.5rem;
+}
+
+.admin-main .section-description {
+    font-size: 0.875rem;
+    color: #67748e;
+    margin-bottom: 1rem;
+    height: 40px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.admin-main .section-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.admin-main .stat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #67748e;
+}
+
+.admin-main .section-status {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.admin-main .status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.admin-main .status-active {
+    background-color: rgba(45, 206, 137, 0.1);
+    color: #2dce89;
+}
+
+.admin-main .status-inactive {
+    background-color: rgba(251, 99, 64, 0.1);
+    color: #fb6340;
+}
+
+.admin-main .sort-order {
+    font-size: 0.75rem;
+    color: #8392ab;
+}
+
+.admin-main .section-card-footer {
+    padding: 1rem 1.25rem;
+    background-color: #f8f9fa;
+    display: flex;
+    justify-content: space-between;
+    border-top: 1px solid #e9ecef;
+}
+
+.admin-main .no-sections {
+    grid-column: 1 / -1;
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    padding: 3rem;
+    text-align: center;
+}
+
+.admin-main .no-data-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: #f8f9fa;
+    color: #8392ab;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    margin: 0 auto 1.5rem;
+}
+
+.admin-main .modal-content {
+    border-radius: 12px;
+    overflow: hidden;
+    border: none;
+}
+
+.admin-main .modal-header {
+    padding: 1.25rem 1.5rem;
+    background-color: white;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.admin-main .modal-title {
+    font-weight: 600;
+    color: #344767;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.admin-main .analytics-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+
+.admin-main .time-range {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.admin-main .analytics-cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+@media (max-width: 991px) {
+    .admin-main .stats-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .admin-main .analytics-cards {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 767px) {
+    .admin-main .stats-cards {
+        grid-template-columns: 1fr;
+    }
+    
+    .admin-main .function-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .admin-main .section-cards {
+        grid-template-columns: 1fr;
+    }
+}
+{% endblock %}
+
 {% block header_title %}版块管理{% endblock %}
 
 {% block content %}
-<!-- 顶部按钮 -->
-<div class="header-actions-container">
-    <button class="btn btn-primary" data-toggle="modal" data-target="#addSectionModal">
-        <i class="fas fa-plus"></i> 创建新版块
-    </button>
+<!-- 数据统计卡片 -->
+<div class="stats-cards">
+    <div class="stat-card">
+        <div class="stat-card-icon">
+            <i class="fas fa-layer-group"></i>
+        </div>
+        <div class="stat-card-content">
+            <div class="stat-card-value">{{ sections|length }}</div>
+            <div class="stat-card-label">版块总数</div>
+        </div>
+        <div class="stat-card-chart">
+            <i class="fas fa-chart-line"></i>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-card-icon">
+            <i class="fas fa-eye"></i>
+        </div>
+        <div class="stat-card-content">
+            <div class="stat-card-value">{{ sections|selectattr('is_active', 'equalto', true)|list|length }}</div>
+            <div class="stat-card-label">可见版块</div>
+        </div>
+        <div class="stat-card-chart">
+            <i class="fas fa-percentage"></i>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-card-icon">
+            <i class="fas fa-file-alt"></i>
+        </div>
+        <div class="stat-card-content">
+            <div class="stat-card-value">{{ sections|map(attribute='post_count')|sum }}</div>
+            <div class="stat-card-label">总帖子数</div>
+        </div>
+        <div class="stat-card-chart">
+            <i class="fas fa-chart-bar"></i>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-card-icon">
+            <i class="fas fa-comments"></i>
+        </div>
+        <div class="stat-card-content">
+            <div class="stat-card-value">{{ sections|map(attribute='comment_count')|sum }}</div>
+            <div class="stat-card-label">总评论数</div>
+        </div>
+        <div class="stat-card-chart">
+            <i class="fas fa-chart-area"></i>
+        </div>
+    </div>
+</div>
+
+<!-- 功能区和搜索 -->
+<div class="function-bar">
+    <div class="search-box">
+        <input type="text" id="sectionSearch" placeholder="搜索版块...">
+        <i class="fas fa-search"></i>
+    </div>
+    
+    <div class="filters">
+        <div class="dropdown">
+            <button class="btn btn-light dropdown-toggle" type="button" id="filterDropdown">
+                <i class="fas fa-filter"></i> 过滤
+            </button>
+            <div class="dropdown-menu">
+                <a class="dropdown-item active" data-filter="all">全部版块</a>
+                <a class="dropdown-item" data-filter="active">可见版块</a>
+                <a class="dropdown-item" data-filter="inactive">隐藏版块</a>
+            </div>
+        </div>
+        
+        <div class="dropdown">
+            <button class="btn btn-light dropdown-toggle" type="button" id="sortDropdown">
+                <i class="fas fa-sort"></i> 排序
+            </button>
+            <div class="dropdown-menu">
+                <a class="dropdown-item active" data-sort="order-asc">按排序值 (升序)</a>
+                <a class="dropdown-item" data-sort="order-desc">按排序值 (降序)</a>
+                <a class="dropdown-item" data-sort="name-asc">按名称 (A-Z)</a>
+                <a class="dropdown-item" data-sort="name-desc">按名称 (Z-A)</a>
+                <a class="dropdown-item" data-sort="posts-desc">按帖子数 (多到少)</a>
+                <a class="dropdown-item" data-sort="date-desc">按创建日期 (新到旧)</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="actions">
+        <button class="btn btn-primary" data-toggle="modal" data-target="#addSectionModal">
+            <i class="fas fa-plus"></i> 创建新版块
+        </button>
+    </div>
 </div>
 
 <!-- 版块卡片列表 -->
 <div class="section-cards">
     {% for section in sections %}
-    <div class="section-card fade-in" data-id="{{ section.id }}">
+    <div class="section-card fade-in" data-id="{{ section.id }}" data-name="{{ section.name }}" data-posts="{{ section.post_count }}" data-order="{{ section.sort_order }}" data-status="{{ section.is_active }}">
         <div class="section-card-header">
             <div class="section-icon" style="background-color: {{ section.icon_color }}">
                 <i class="fas fa-{{ section.icon }}"></i>
@@ -65,12 +527,12 @@
             </div>
         </div>
         <div class="section-card-footer">
-            <a href="#" class="btn btn-light btn-sm">
-                查看详情
-            </a>
             <a href="{{ url_for('section_detail', section_id=section.id) }}" class="btn btn-light btn-sm" target="_blank">
                 <i class="fas fa-external-link-alt"></i> 前台查看
             </a>
+            <button class="btn btn-primary btn-sm section-stats-btn" data-id="{{ section.id }}">
+                <i class="fas fa-chart-pie"></i> 数据分析
+            </button>
         </div>
     </div>
     {% else %}
@@ -84,6 +546,114 @@
     {% endfor %}
 </div>
 
+<!-- 版块统计模态框 -->
+<div class="modal fade" id="sectionStatsModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title"><i class="fas fa-chart-pie"></i> <span id="statsModalTitle">版块数据分析</span></h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true"><i class="fas fa-times"></i></span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="section-analytics">
+                    <div class="analytics-header">
+                        <div class="time-range">
+                            <button class="btn btn-sm btn-light active" data-range="7">最近7天</button>
+                            <button class="btn btn-sm btn-light" data-range="30">最近30天</button>
+                            <button class="btn btn-sm btn-light" data-range="90">最近90天</button>
+                            <button class="btn btn-sm btn-light" data-range="365">最近一年</button>
+                        </div>
+                    </div>
+                    
+                    <div class="analytics-cards">
+                        <div class="analytics-card">
+                            <div class="analytics-card-icon">
+                                <i class="fas fa-eye"></i>
+                            </div>
+                            <div class="analytics-card-content">
+                                <div class="analytics-card-value">1,245</div>
+                                <div class="analytics-card-label">总浏览量</div>
+                            </div>
+                            <div class="analytics-card-change positive">
+                                <i class="fas fa-arrow-up"></i> 12%
+                            </div>
+                        </div>
+                        
+                        <div class="analytics-card">
+                            <div class="analytics-card-icon">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                            <div class="analytics-card-content">
+                                <div class="analytics-card-value">48</div>
+                                <div class="analytics-card-label">新发布帖子</div>
+                            </div>
+                            <div class="analytics-card-change positive">
+                                <i class="fas fa-arrow-up"></i> 5%
+                            </div>
+                        </div>
+                        
+                        <div class="analytics-card">
+                            <div class="analytics-card-icon">
+                                <i class="fas fa-comments"></i>
+                            </div>
+                            <div class="analytics-card-content">
+                                <div class="analytics-card-value">156</div>
+                                <div class="analytics-card-label">新增评论</div>
+                            </div>
+                            <div class="analytics-card-change negative">
+                                <i class="fas fa-arrow-down"></i> 3%
+                            </div>
+                        </div>
+                        
+                        <div class="analytics-card">
+                            <div class="analytics-card-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="analytics-card-content">
+                                <div class="analytics-card-value">28</div>
+                                <div class="analytics-card-label">活跃用户</div>
+                            </div>
+                            <div class="analytics-card-change positive">
+                                <i class="fas fa-arrow-up"></i> 8%
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="analytics-charts">
+                        <div class="chart-container">
+                            <h5 class="chart-title">发帖趋势</h5>
+                            <div class="chart" id="postsChart">
+                                <div class="chart-placeholder">
+                                    <i class="fas fa-chart-line"></i>
+                                    <span>加载中...</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="chart-container">
+                            <h5 class="chart-title">用户活跃度</h5>
+                            <div class="chart" id="usersChart">
+                                <div class="chart-placeholder">
+                                    <i class="fas fa-chart-bar"></i>
+                                    <span>加载中...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary export-stats-btn">
+                    <i class="fas fa-download"></i> 导出数据
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- 添加版块模态框 -->
 <div class="modal fade" id="addSectionModal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -91,7 +661,7 @@
             <div class="modal-header">
                 <h4 class="modal-title"><i class="fas fa-layer-group"></i> 创建新版块</h4>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <i class="fas fa-times"></i>
+                    <span aria-hidden="true"><i class="fas fa-times"></i></span>
                 </button>
             </div>
             <div class="modal-body">
@@ -195,28 +765,23 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="sortOrder" class="form-label">排序顺序</label>
-                        <input type="number" id="sortOrder" name="sort_order" class="form-control" value="0" min="0">
-                        <div class="form-text">数字越小，排序越靠前</div>
+                        <label for="sort_order" class="form-label">排序</label>
+                        <input type="number" id="sort_order" name="sort_order" class="form-control" value="0" min="0">
+                        <small class="form-text text-muted">数字越小排序越靠前</small>
                     </div>
                     
                     <div class="form-group">
-                        <div class="checkbox-wrapper">
-                            <input type="checkbox" id="isActive" name="is_active" class="custom-checkbox" checked>
-                            <label for="isActive"></label>
-                            <span class="checkbox-label">版块可见</span>
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="is_active" name="is_active" checked>
+                            <label class="custom-control-label" for="is_active">启用此版块</label>
                         </div>
-                        <div class="form-text ml-4">若不勾选，版块将在前台隐藏</div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-light" data-dismiss="modal">取消</button>
+                        <button type="submit" class="btn btn-primary">创建版块</button>
                     </div>
                 </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-light" data-dismiss="modal">
-                    <i class="fas fa-times"></i> 取消
-                </button>
-                <button type="submit" form="addSectionForm" class="btn btn-primary">
-                    <i class="fas fa-check"></i> 创建版块
-                </button>
             </div>
         </div>
     </div>
@@ -229,7 +794,7 @@
             <div class="modal-header">
                 <h4 class="modal-title"><i class="fas fa-edit"></i> 编辑版块</h4>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <i class="fas fa-times"></i>
+                    <span aria-hidden="true"><i class="fas fa-times"></i></span>
                 </button>
             </div>
             <div class="modal-body">
@@ -362,312 +927,355 @@
 </div>
 
 <style>
-    /* 顶部按钮容器 */
-    .header-actions-container {
-        margin-bottom: 1.5rem;
-        display: flex;
-        justify-content: flex-end;
+    /* 数据统计卡片 */
+    .stats-cards {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 2rem;
     }
     
-    .header-actions-container .btn-primary {
-        padding: 0.6rem 1.2rem;
-        border-radius: var(--border-radius-md);
-        font-weight: 500;
+    .stat-card {
+        background-color: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .stat-card-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background-color: rgba(45, 206, 137, 0.1);
+        color: #2dce89;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+    }
+    
+    .stat-card-content {
+        flex: 1;
+        margin-left: 1rem;
+    }
+    
+    .stat-card-value {
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: #344767;
+        margin-bottom: 0.25rem;
+    }
+    
+    .stat-card-label {
+        font-size: 0.875rem;
+        color: #67748e;
+    }
+    
+    .stat-card-chart {
+        color: var(--gray-400);
+        font-size: 1.5rem;
+        margin-left: 1rem;
+    }
+    
+    /* 功能区 */
+    .function-bar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+        gap: 1rem;
+        background-color: white;
+        border-radius: 12px;
+        padding: 1rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    .search-box {
+        position: relative;
+        flex: 1;
+        min-width: 240px;
+    }
+    
+    .search-box input {
+        padding: 0.625rem 1rem 0.625rem 2.5rem;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        width: 100%;
+    }
+    
+    .search-box i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #a0aec0;
+    }
+    
+    .filters {
+        display: flex;
+        gap: 0.75rem;
+    }
+    
+    .dropdown {
+        position: relative;
+    }
+    
+    .dropdown-toggle {
         display: flex;
         align-items: center;
         gap: 0.5rem;
+        padding: 0.625rem 1rem;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        background-color: white;
+        cursor: pointer;
         transition: all 0.2s ease;
-        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-darker) 100%);
-        border: none;
-        box-shadow: 0 3px 6px rgba(94, 114, 228, 0.3);
     }
     
-    .header-actions-container .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 10px rgba(94, 114, 228, 0.4);
+    .dropdown:hover .dropdown-menu {
+        display: block;
     }
     
-    .header-actions-container .btn-primary:active {
-        transform: translateY(0);
-        box-shadow: 0 2px 5px rgba(94, 114, 228, 0.3);
+    .dropdown-menu {
+        display: none;
+        position: absolute;
+        top: 100%;
+        right: 0;
+        min-width: 180px;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        padding: 0.5rem 0;
+        z-index: 100;
     }
     
-    .header-actions-container .btn-primary i {
-        font-size: 0.875rem;
+    .dropdown-item {
+        display: block;
+        padding: 0.5rem 1rem;
+        color: #67748e;
+        text-decoration: none;
+        transition: all 0.2s ease;
     }
     
-    /* 版块卡片网格 */
-    .section-cards {
+    .dropdown-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .dropdown-item.active {
+        background-color: #263849;
+        color: white;
+    }
+    
+    .actions {
+        margin-left: auto;
+    }
+    
+    /* 版块分析模态框 */
+    .analytics-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+    }
+    
+    .time-range {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .analytics-cards {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        grid-template-columns: repeat(2, 1fr);
         gap: 1.5rem;
         margin-bottom: 1.5rem;
     }
     
-    /* 版块卡片 */
-    .section-card {
+    .analytics-card {
         background: white;
-        border-radius: var(--border-radius-lg);
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
-        overflow: hidden;
-        transition: all 0.3s ease;
-        display: flex;
-        flex-direction: column;
-        position: relative;
-    }
-    
-    .section-card:hover {
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        transform: translateY(-2px);
-    }
-    
-    .section-card:hover .section-card-body .section-title,
-    .section-card:hover .section-card-body .section-description,
-    .section-card:hover .section-card-body .section-stats .stat-item,
-    .section-card:hover .section-card-body .section-status .sort-order {
-        color: white;
-    }
-    
-    .section-card:hover .section-card-body {
-        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-darker) 100%);
-    }
-    
-    .section-card:hover .section-card-footer {
-        background-color: rgba(255, 255, 255, 0.1);
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    
-    .section-card:hover .btn-light {
-        background-color: rgba(255, 255, 255, 0.15);
-        color: white;
-        border: none;
-    }
-    
-    .section-card:hover .btn-light:hover {
-        background-color: rgba(255, 255, 255, 0.25);
-    }
-    
-    .section-card-header {
-        padding: 1.25rem;
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-    }
-    
-    .section-icon {
-        width: 48px;
-        height: 48px;
         border-radius: var(--border-radius-md);
-        background-color: var(--primary);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+        border: 1px solid var(--gray-200);
+    }
+    
+    .analytics-card-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: var(--border-radius-sm);
+        background: rgba(38, 56, 73, 0.1);
+        color: rgb(38, 56, 73);
         display: flex;
         align-items: center;
         justify-content: center;
-        color: white;
-        font-size: 1.25rem;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        font-size: 1rem;
+        margin-right: 0.75rem;
     }
     
-    .section-header-actions {
-        display: flex;
-        gap: 0.5rem;
-    }
-    
-    .section-card-body {
-        padding: 0 1.25rem 1.25rem;
+    .analytics-card-content {
         flex: 1;
-        transition: all 0.3s ease;
     }
     
-    .section-title {
-        font-size: 1.125rem;
+    .analytics-card-value {
+        font-size: 1.25rem;
         font-weight: 600;
-        margin-bottom: 0.5rem;
-        transition: color 0.3s ease;
+        color: var(--gray-900);
+        line-height: 1.2;
     }
     
-    .section-description {
-        font-size: 0.875rem;
-        color: var(--gray-500);
-        margin-bottom: 1rem;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        transition: color 0.3s ease;
-    }
-    
-    .section-stats {
-        display: flex;
-        gap: 1rem;
-        margin-bottom: 1rem;
-    }
-    
-    .stat-item {
-        display: flex;
-        align-items: center;
-        gap: 0.375rem;
+    .analytics-card-label {
         font-size: 0.75rem;
-        color: var(--gray-600);
-        transition: color 0.3s ease;
+        color: var(--gray-500);
     }
     
-    .section-status {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 1rem;
-    }
-    
-    .status-badge {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.25rem 0.5rem;
+    .analytics-card-change {
         font-size: 0.75rem;
         font-weight: 500;
+        padding: 0.25rem 0.5rem;
         border-radius: var(--border-radius-full);
+        margin-left: 0.5rem;
     }
     
-    .status-active {
-        background-color: rgba(45, 206, 137, 0.1);
+    .analytics-card-change.positive {
+        background: rgba(76, 175, 80, 0.1);
         color: var(--success);
     }
     
-    .status-inactive {
-        background-color: rgba(245, 54, 92, 0.1);
+    .analytics-card-change.negative {
+        background: rgba(244, 67, 54, 0.1);
         color: var(--danger);
     }
     
-    .sort-order {
-        font-size: 0.75rem;
-        color: var(--gray-500);
-        transition: color 0.3s ease;
+    .analytics-charts {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
     }
     
-    .section-card-footer {
-        padding: 1rem 1.25rem;
-        border-top: 1px solid var(--gray-200);
-        display: flex;
-        justify-content: space-between;
-        transition: all 0.3s ease;
-    }
-    
-    /* 操作按钮 */
-    .action-btn {
-        width: 28px;
-        height: 28px;
-        border-radius: var(--border-radius-full);
-        background: var(--gray-100);
-        color: var(--gray-700);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: none;
-        cursor: pointer;
-        transition: all 0.15s ease;
-        font-size: 0.75rem;
-    }
-    
-    .action-btn:hover {
-        background: var(--gray-200);
-        color: var(--gray-900);
-    }
-    
-    .edit-section-btn:hover {
-        background: var(--primary);
-        color: white;
-    }
-    
-    .deactivate-section-btn:hover, .delete-section-btn:hover {
-        background: var(--danger);
-        color: white;
-    }
-    
-    .activate-section-btn:hover {
-        background: var(--success);
-        color: white;
-    }
-    
-    /* 无数据状态 */
-    .no-sections {
-        grid-column: 1 / -1;
+    .chart-container {
         background: white;
-        border-radius: var(--border-radius-lg);
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
-        padding: 3rem;
-        text-align: center;
+        border-radius: var(--border-radius-md);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        padding: 1rem;
+        border: 1px solid var(--gray-200);
     }
     
-    .no-data-icon {
-        width: 64px;
-        height: 64px;
-        background: var(--gray-100);
-        border-radius: var(--border-radius-full);
+    .chart-title {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--gray-700);
+        margin-bottom: 1rem;
+    }
+    
+    .chart {
+        height: 250px;
+        position: relative;
+    }
+    
+    .chart-placeholder {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
-        margin: 0 auto 1.5rem;
-        font-size: 1.5rem;
         color: var(--gray-400);
-    }
-    
-    .no-sections h3 {
         font-size: 1.25rem;
-        margin-bottom: 0.5rem;
-        color: var(--gray-900);
     }
     
-    .no-sections p {
+    .chart-placeholder span {
         font-size: 0.875rem;
-        color: var(--gray-500);
+        margin-top: 0.5rem;
     }
-    
-    /* 模态框样式改进 */
-    .modal-content {
-        border: none;
-        border-radius: var(--border-radius-lg);
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        overflow: hidden;
-    }
-    
-    .modal-header {
-        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-darker) 100%);
+
+    /* 自定义按钮样式 */
+    .btn-primary {
+        background: linear-gradient(to right, rgb(38, 56, 73), rgb(48, 66, 83));
+        border-color: rgb(38, 56, 73);
         color: white;
-        border-bottom: none;
-        padding: 1.5rem;
+        font-weight: 500;
+        padding: 8px 16px;
+        box-shadow: 0 2px 6px rgba(38, 56, 73, 0.3);
+        transition: all 0.2s ease;
     }
     
-    .modal-title {
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
+    .btn-primary:hover {
+        background: linear-gradient(to right, rgb(28, 46, 63), rgb(38, 56, 73));
+        box-shadow: 0 4px 10px rgba(38, 56, 73, 0.4);
+        transform: translateY(-1px);
     }
     
-    .modal-title i {
-        font-size: 1.25rem;
+    .btn-primary:active, .btn-primary:focus {
+        background: rgb(28, 46, 63);
+        box-shadow: 0 1px 3px rgba(38, 56, 73, 0.2);
+        transform: translateY(1px);
     }
     
-    .modal-header .close {
-        color: white;
-        opacity: 0.8;
-        text-shadow: none;
-        transition: opacity 0.15s ease;
+    .btn-light {
+        background-color: #f8f9fa;
+        border-color: #e9ecef;
+        color: #495057;
+        font-weight: 500;
+        padding: 8px 16px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        transition: all 0.2s ease;
     }
     
-    .modal-header .close:hover {
-        opacity: 1;
+    .btn-light:hover {
+        background-color: #e9ecef;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     }
     
-    .modal-body {
-        padding: 1.75rem;
+    .btn-danger {
+        background: linear-gradient(135deg, #d43c31 0%, #f44336 100%);
+        border-color: #d43c31;
+        font-weight: 500;
+        box-shadow: 0 2px 6px rgba(244, 67, 54, 0.3);
+        transition: all 0.2s ease;
     }
     
-    .modal-footer {
-        border-top: 1px solid var(--gray-200);
-        padding: 1.25rem 1.75rem;
+    .btn-danger:hover {
+        background: linear-gradient(135deg, #c23529 0%, #e53935 100%);
+        box-shadow: 0 4px 10px rgba(244, 67, 54, 0.4);
+        transform: translateY(-1px);
     }
     
+    .btn-warning {
+        background: linear-gradient(135deg, #fb8c00 0%, #ffa726 100%);
+        border-color: #fb8c00;
+        font-weight: 500;
+        box-shadow: 0 2px 6px rgba(255, 152, 0, 0.3);
+        transition: all 0.2s ease;
+    }
+    
+    .btn-warning:hover {
+        background: linear-gradient(135deg, #ef6c00 0%, #ff9800 100%);
+        box-shadow: 0 4px 10px rgba(255, 152, 0, 0.4);
+        transform: translateY(-1px);
+    }
+    
+    .btn-success {
+        background: linear-gradient(135deg, #2e7d32 0%, #43a047 100%);
+        border-color: #2e7d32;
+        font-weight: 500;
+        box-shadow: 0 2px 6px rgba(76, 175, 80, 0.3);
+        transition: all 0.2s ease;
+    }
+    
+    .btn-success:hover {
+        background: linear-gradient(135deg, #256b2c 0%, #388e3c 100%);
+        box-shadow: 0 4px 10px rgba(76, 175, 80, 0.4);
+        transform: translateY(-1px);
+    }
+
+    /* 表单样式 */
     .form-group {
         margin-bottom: 1.5rem;
     }
@@ -688,14 +1296,77 @@
     }
     
     .form-control:focus {
-        border-color: var(--primary);
-        box-shadow: 0 0 0 3px rgba(94, 114, 228, 0.1);
+        border-color: rgb(38, 56, 73);
+        box-shadow: 0 0 0 3px rgba(38, 56, 73, 0.1);
     }
     
     .form-text {
         font-size: 0.75rem;
         color: var(--gray-500);
         margin-top: 0.375rem;
+    }
+    
+    /* 复选框样式 */
+    .checkbox-wrapper {
+        position: relative;
+        display: inline-block;
+    }
+    
+    .custom-checkbox {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+        height: 0;
+        width: 0;
+    }
+    
+    .checkbox-wrapper label {
+        position: relative;
+        cursor: pointer;
+        padding-left: 25px;
+        text-align: center;
+        color: #555;
+        display: inline-block;
+        font-size: 13px;
+    }
+    
+    .checkbox-wrapper label:before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 18px;
+        height: 18px;
+        border: 1px solid #ddd;
+        border-radius: 3px;
+        background: #fff;
+    }
+    
+    .custom-checkbox:checked + label:after {
+        content: '';
+        position: absolute;
+        left: 6px;
+        top: 3px;
+        width: 6px;
+        height: 10px;
+        border: solid rgb(38, 56, 73);
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+    }
+    
+    .custom-checkbox:indeterminate + label:after {
+        content: '';
+        position: absolute;
+        left: 4px;
+        top: 8px;
+        width: 10px;
+        height: 2px;
+        background-color: rgb(38, 56, 73);
+    }
+    
+    .checkbox-label {
+        margin-left: 0.5rem;
+        font-size: 0.875rem;
     }
     
     /* 图标选择器 */
@@ -790,15 +1461,15 @@
     }
     
     .icon-item:hover {
-        background: var(--primary);
+        background: rgb(38, 56, 73);
         color: white;
         transform: scale(1.05);
     }
     
     .icon-item.selected {
-        background: var(--primary);
+        background: rgb(38, 56, 73);
         color: white;
-        box-shadow: 0 2px 5px rgba(94, 114, 228, 0.3);
+        box-shadow: 0 2px 5px rgba(38, 56, 73, 0.3);
     }
     
     /* 颜色选择器 */
@@ -851,82 +1522,7 @@
         width: 50%;
     }
     
-    /* 复选框样式 */
-    .checkbox-wrapper {
-        display: flex;
-        align-items: center;
-    }
-    
-    .custom-checkbox {
-        position: absolute;
-        opacity: 0;
-        cursor: pointer;
-        height: 0;
-        width: 0;
-    }
-    
-    .checkbox-wrapper label {
-        position: relative;
-        display: inline-block;
-        width: 20px;
-        height: 20px;
-        background-color: var(--gray-200);
-        border-radius: var(--border-radius-sm);
-        cursor: pointer;
-        transition: all 0.15s ease;
-        margin-right: 0.5rem;
-    }
-    
-    .custom-checkbox:checked + label {
-        background-color: var(--primary);
-    }
-    
-    .checkbox-wrapper label:after {
-        content: "";
-        position: absolute;
-        display: none;
-        left: 7px;
-        top: 3px;
-        width: 6px;
-        height: 11px;
-        border: solid white;
-        border-width: 0 2px 2px 0;
-        transform: rotate(45deg);
-    }
-    
-    .custom-checkbox:checked + label:after {
-        display: block;
-    }
-    
-    .checkbox-label {
-        font-size: 0.875rem;
-        margin-top: 1px;
-    }
-    
-    /* 按钮样式 */
-    .btn-sm {
-        padding: 0.375rem 0.75rem;
-        font-size: 0.75rem;
-    }
-    
-    .btn-primary {
-        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-darker) 100%);
-        border: none;
-        box-shadow: 0 2px 5px rgba(94, 114, 228, 0.3);
-        transition: all 0.15s ease;
-    }
-    
-    .btn-primary:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 8px rgba(94, 114, 228, 0.4);
-    }
-    
-    /* 响应式布局 */
     @media (max-width: 768px) {
-        .section-cards {
-            grid-template-columns: 1fr;
-        }
-        
         .form-row {
             flex-direction: column;
         }
@@ -937,449 +1533,105 @@
         }
     }
     
-    /* 模态框动画 */
+    /* 模态框样式 */
     .modal-content {
+        border: none;
+        border-radius: var(--border-radius-lg);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
         transform: translateY(-20px);
         opacity: 0;
         transition: all 0.3s ease;
     }
     
-    .modal-dialog-centered {
-        display: flex;
-        align-items: center;
-        min-height: calc(100% - 3.5rem);
+    .modal-header {
+        background: linear-gradient(to right, rgb(38, 56, 73), rgb(58, 76, 93));
+        color: white;
+        border-bottom: none;
+        padding: 1.5rem;
     }
     
-    /* 警告框样式 */
-    .alert {
-        padding: 0.75rem 1rem;
-        margin-bottom: 1rem;
-        border-radius: var(--border-radius-md);
+    .modal-title {
+        font-weight: 600;
         display: flex;
         align-items: center;
         gap: 0.75rem;
-        font-size: 0.875rem;
+        color: white;
     }
     
-    .alert-danger {
-        background-color: rgba(245, 54, 92, 0.1);
-        color: var(--danger);
+    .modal-title i {
+        font-size: 1.25rem;
+        color: white;
     }
     
-    .alert i {
-        font-size: 1rem;
+    .modal-header .close {
+        color: white;
+        opacity: 0.8;
+        text-shadow: none;
+        transition: opacity 0.15s ease;
+        background: transparent;
+        border: none;
+        font-size: 1.5rem;
+        padding: 0;
+        margin: -1rem -1rem -1rem auto;
+        line-height: 1;
+        float: right;
+    }
+    
+    .modal-header .close:hover {
+        opacity: 1;
+        color: white;
+    }
+    
+    .modal-header .close i {
+        color: white;
+    }
+    
+    .modal-body {
+        padding: 1.75rem;
+    }
+    
+    .modal-footer {
+        border-top: 1px solid var(--gray-200);
+        padding: 1.25rem 1.75rem;
+    }
+    
+    /* 确保模态框中的按钮都有正确的文本颜色 */
+    .modal-footer .btn {
+        font-weight: 500;
+    }
+    
+    .modal-footer .btn-primary {
+        color: white;
+    }
+    
+    .modal-footer .btn-light {
+        color: #495057;
     }
     
     /* 添加左边距样式 */
     .ml-4 {
         margin-left: 1.5rem;
     }
+
+    /* 响应式调整 */
+    @media (max-width: 992px) {
+        .stats-cards {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 576px) {
+        .stats-cards {
+            grid-template-columns: 1fr;
+        }
+    }
 </style>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // 图标选择器功能 - 创建版块
-        const selectIconBtn = document.getElementById('selectIconBtn');
-        const iconPopup = document.getElementById('iconPopup');
-        const selectedIcon = document.getElementById('selectedIcon');
-        const iconInput = document.getElementById('icon');
-        const iconItems = document.querySelectorAll('#iconPopup .icon-item');
-        const iconSearchInput = document.getElementById('iconSearchInput');
-        
-        // 显示/隐藏图标选择弹窗
-        selectIconBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            iconPopup.classList.toggle('show');
-        });
-        
-        // 点击外部区域关闭弹窗
-        document.addEventListener('click', function(event) {
-            if (!iconPopup.contains(event.target) && event.target !== selectIconBtn) {
-                iconPopup.classList.remove('show');
-            }
-        });
-        
-        // 选择图标
-        iconItems.forEach(item => {
-            item.addEventListener('click', function() {
-                const icon = this.dataset.icon;
-                iconInput.value = icon;
-                selectedIcon.innerHTML = `<i class="fas fa-${icon}"></i>`;
-                iconPopup.classList.remove('show');
-                
-                // 更新选中状态
-                iconItems.forEach(i => i.classList.remove('selected'));
-                this.classList.add('selected');
-            });
-        });
-        
-        // 搜索图标
-        iconSearchInput.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            
-            iconItems.forEach(item => {
-                const icon = item.dataset.icon;
-                
-                if (icon.includes(searchTerm)) {
-                    item.style.display = '';
-                } else {
-                    item.style.display = 'none';
-                }
-            });
-        });
-        
-        // 初始化选中状态
-        iconItems.forEach(item => {
-            if (item.dataset.icon === iconInput.value) {
-                item.classList.add('selected');
-            }
-        });
-        
-        // 颜色选择器功能 - 创建版块
-        const colorOptions = document.querySelectorAll('.color-option');
-        const selectedColor = document.getElementById('selectedColor');
-        const colorInput = document.getElementById('iconColor');
-        
-        colorOptions.forEach(option => {
-            option.addEventListener('click', function() {
-                const color = this.dataset.color;
-                colorInput.value = color;
-                selectedColor.style.backgroundColor = color;
-                
-                // 更新选中状态
-                colorOptions.forEach(o => o.classList.remove('selected'));
-                this.classList.add('selected');
-            });
-            
-            // 初始化选中状态
-            if (option.dataset.color === colorInput.value) {
-                option.classList.add('selected');
-            }
-        });
-        
-        // 图标选择器功能 - 编辑版块
-        const editSelectIconBtn = document.getElementById('editSelectIconBtn');
-        const editIconPopup = document.getElementById('editIconPopup');
-        const editSelectedIcon = document.getElementById('editSelectedIcon');
-        const editIconInput = document.getElementById('editIcon');
-        const editIconItems = document.querySelectorAll('#editIconPopup .icon-item');
-        const editIconSearchInput = document.getElementById('editIconSearchInput');
-        
-        // 显示/隐藏图标选择弹窗
-        if (editSelectIconBtn) {
-            editSelectIconBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                editIconPopup.classList.toggle('show');
-            });
-            
-            // 点击外部区域关闭弹窗
-            document.addEventListener('click', function(event) {
-                if (!editIconPopup.contains(event.target) && event.target !== editSelectIconBtn) {
-                    editIconPopup.classList.remove('show');
-                }
-            });
-            
-            // 选择图标
-            editIconItems.forEach(item => {
-                item.addEventListener('click', function() {
-                    const icon = this.dataset.icon;
-                    editIconInput.value = icon;
-                    editSelectedIcon.innerHTML = `<i class="fas fa-${icon}"></i>`;
-                    editIconPopup.classList.remove('show');
-                    
-                    // 更新选中状态
-                    editIconItems.forEach(i => i.classList.remove('selected'));
-                    this.classList.add('selected');
-                });
-            });
-            
-            // 搜索图标
-            editIconSearchInput.addEventListener('input', function() {
-                const searchTerm = this.value.toLowerCase();
-                
-                editIconItems.forEach(item => {
-                    const icon = item.dataset.icon;
-                    
-                    if (icon.includes(searchTerm)) {
-                        item.style.display = '';
-                    } else {
-                        item.style.display = 'none';
-                    }
-                });
-            });
-        }
-        
-        // 版块操作按钮
-        const editBtns = document.querySelectorAll('.edit-section-btn');
-        const deactivateBtns = document.querySelectorAll('.deactivate-section-btn');
-        const activateBtns = document.querySelectorAll('.activate-section-btn');
-        const deleteBtns = document.querySelectorAll('.delete-section-btn');
-        
-        // 编辑版块
-        editBtns.forEach(btn => {
-            btn.addEventListener('click', function() {
-                const sectionId = this.dataset.id;
-                console.log('Editing section:', sectionId);
-                
-                // 这里应该加载版块数据并打开编辑模态框
-                // 实际项目中应该发送AJAX请求获取数据
-                
-                // 示例：
-                document.getElementById('editSectionId').value = sectionId;
-                document.getElementById('editName').value = '版块名称'; // 实际应该是从服务器获取的数据
-                document.getElementById('editDescription').value = '版块描述';
-                document.getElementById('editIcon').value = 'layer-group';
-                document.getElementById('editSelectedIcon').innerHTML = '<i class="fas fa-layer-group"></i>';
-                document.getElementById('editIconColor').value = '#5e72e4';
-                document.getElementById('editSelectedColor').style.backgroundColor = '#5e72e4';
-                document.getElementById('editSortOrder').value = '0';
-                document.getElementById('editIsActive').checked = true;
-                
-                // 打开模态框
-                $('#editSectionModal').modal('show');
-            });
-        });
-        
-        // 禁用版块
-        deactivateBtns.forEach(btn => {
-            btn.addEventListener('click', function() {
-                const sectionId = this.dataset.id;
-                
-                // 创建确认对话框
-                const confirmDialog = document.createElement('div');
-                confirmDialog.className = 'modal fade';
-                confirmDialog.id = 'confirmDeactivateModal';
-                confirmDialog.innerHTML = `
-                    <div class="modal-dialog modal-dialog-centered" role="document">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h4 class="modal-title"><i class="fas fa-eye-slash"></i> 隐藏版块</h4>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </div>
-                            <div class="modal-body">
-                                <p>确定要隐藏此版块吗？隐藏后，用户将无法在前台看到此版块。</p>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-light" data-dismiss="modal">取消</button>
-                                <button type="button" class="btn btn-danger" id="confirmDeactivateBtn">
-                                    <i class="fas fa-eye-slash"></i> 确认隐藏
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
-                document.body.appendChild(confirmDialog);
-                
-                // 显示对话框
-                $('#confirmDeactivateModal').modal('show');
-                
-                // 确认禁用
-                document.getElementById('confirmDeactivateBtn').addEventListener('click', function() {
-                    console.log('Deactivating section:', sectionId);
-                    // 这里应该发送AJAX请求
-                    // 实际项目中，请求成功后应该刷新页面或更新UI
-                    
-                    // 关闭对话框
-                    $('#confirmDeactivateModal').modal('hide');
-                    
-                    // 移除对话框
-                    setTimeout(function() {
-                        document.body.removeChild(confirmDialog);
-                    }, 500);
-                });
-                
-                // 对话框关闭后移除
-                $('#confirmDeactivateModal').on('hidden.bs.modal', function() {
-                    setTimeout(function() {
-                        if (document.body.contains(confirmDialog)) {
-                            document.body.removeChild(confirmDialog);
-                        }
-                    }, 500);
-                });
-            });
-        });
-        
-        // 启用版块
-        activateBtns.forEach(btn => {
-            btn.addEventListener('click', function() {
-                const sectionId = this.dataset.id;
-                
-                // 创建确认对话框
-                const confirmDialog = document.createElement('div');
-                confirmDialog.className = 'modal fade';
-                confirmDialog.id = 'confirmActivateModal';
-                confirmDialog.innerHTML = `
-                    <div class="modal-dialog modal-dialog-centered" role="document">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h4 class="modal-title"><i class="fas fa-eye"></i> 显示版块</h4>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </div>
-                            <div class="modal-body">
-                                <p>确定要显示此版块吗？显示后，用户将可以在前台看到此版块。</p>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-light" data-dismiss="modal">取消</button>
-                                <button type="button" class="btn btn-success" id="confirmActivateBtn">
-                                    <i class="fas fa-eye"></i> 确认显示
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
-                document.body.appendChild(confirmDialog);
-                
-                // 显示对话框
-                $('#confirmActivateModal').modal('show');
-                
-                // 确认启用
-                document.getElementById('confirmActivateBtn').addEventListener('click', function() {
-                    console.log('Activating section:', sectionId);
-                    // 这里应该发送AJAX请求
-                    // 实际项目中，请求成功后应该刷新页面或更新UI
-                    
-                    // 关闭对话框
-                    $('#confirmActivateModal').modal('hide');
-                    
-                    // 移除对话框
-                    setTimeout(function() {
-                        document.body.removeChild(confirmDialog);
-                    }, 500);
-                });
-                
-                // 对话框关闭后移除
-                $('#confirmActivateModal').on('hidden.bs.modal', function() {
-                    setTimeout(function() {
-                        if (document.body.contains(confirmDialog)) {
-                            document.body.removeChild(confirmDialog);
-                        }
-                    }, 500);
-                });
-            });
-        });
-        
-        // 删除版块
-        deleteBtns.forEach(btn => {
-            btn.addEventListener('click', function() {
-                const sectionId = this.dataset.id;
-                
-                // 创建确认对话框
-                const confirmDialog = document.createElement('div');
-                confirmDialog.className = 'modal fade';
-                confirmDialog.id = 'confirmDeleteModal';
-                confirmDialog.innerHTML = `
-                    <div class="modal-dialog modal-dialog-centered" role="document">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h4 class="modal-title"><i class="fas fa-trash-alt"></i> 删除版块</h4>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </div>
-                            <div class="modal-body">
-                                <div class="alert alert-danger" role="alert">
-                                    <i class="fas fa-exclamation-triangle"></i> 警告：此操作不可恢复！
-                                </div>
-                                <p>确定要删除此版块吗？删除后，该版块下的所有帖子和评论也将被删除。</p>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-light" data-dismiss="modal">取消</button>
-                                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
-                                    <i class="fas fa-trash-alt"></i> 确认删除
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
-                document.body.appendChild(confirmDialog);
-                
-                // 显示对话框
-                $('#confirmDeleteModal').modal('show');
-                
-                // 确认删除
-                document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
-                    console.log('Deleting section:', sectionId);
-                    // 这里应该发送AJAX请求
-                    // 实际项目中，请求成功后应该刷新页面或更新UI
-                    
-                    // 关闭对话框
-                    $('#confirmDeleteModal').modal('hide');
-                    
-                    // 移除对话框
-                    setTimeout(function() {
-                        document.body.removeChild(confirmDialog);
-                    }, 500);
-                });
-                
-                // 对话框关闭后移除
-                $('#confirmDeleteModal').on('hidden.bs.modal', function() {
-                    setTimeout(function() {
-                        if (document.body.contains(confirmDialog)) {
-                            document.body.removeChild(confirmDialog);
-                        }
-                    }, 500);
-                });
-            });
-        });
-        
-        // 添加版块模态框动画效果
-        $('#addSectionModal').on('show.bs.modal', function() {
-            setTimeout(() => {
-                const modalContent = this.querySelector('.modal-content');
-                modalContent.style.transform = 'translateY(0)';
-                modalContent.style.opacity = '1';
-            }, 50);
-        });
-        
-        $('#addSectionModal').on('hide.bs.modal', function() {
-            const modalContent = this.querySelector('.modal-content');
-            modalContent.style.transform = 'translateY(-20px)';
-            modalContent.style.opacity = '0';
-        });
-        
-        // 编辑版块模态框动画效果
-        $('#editSectionModal').on('show.bs.modal', function() {
-            setTimeout(() => {
-                const modalContent = this.querySelector('.modal-content');
-                modalContent.style.transform = 'translateY(0)';
-                modalContent.style.opacity = '1';
-            }, 50);
-        });
-        
-        $('#editSectionModal').on('hide.bs.modal', function() {
-            const modalContent = this.querySelector('.modal-content');
-            modalContent.style.transform = 'translateY(-20px)';
-            modalContent.style.opacity = '0';
-        });
-        
-        // 处理编辑表单提交
-        const editForm = document.getElementById('editSectionForm');
-        if (editForm) {
-            editForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                const sectionId = document.getElementById('editSectionId').value;
-                // 设置正确的action URL
-                this.action = '{{ url_for("edit_section", section_id=0) }}'.replace('0', sectionId);
-                this.submit();
-            });
-        }
-        
-        // 处理板块表单提交
-        const addSectionForm = document.getElementById('addSectionForm');
-        if (addSectionForm) {
-            addSectionForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                this.action = '{{ url_for("create_section") }}';
-                this.submit();
-            });
-        }
-    });
-</script>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/admin-sections.js') }}"></script>
 {% endblock %} 

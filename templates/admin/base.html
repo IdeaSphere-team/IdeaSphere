@@ -6,737 +6,11 @@
     <title>{% block title %}IdeaSphere 管理后台{% endblock %}</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/admin.css') }}" rel="stylesheet">
     <style>
-        :root {
-            /* 颜色变量 */
-            --primary: #5e72e4;
-            --primary-darker: #4f61d9;
-            --primary-lighter: #8a97f0;
-            --secondary: #11cdef;
-            --accent: #fb6340;
-            --success: #2dce89;
-            --warning: #fb6340;
-            --danger: #f5365c;
-            --info: #11cdef;
-            
-            --gray-50: #f9fafb;
-            --gray-100: #f3f4f6;
-            --gray-200: #e5e7eb;
-            --gray-300: #d1d5db;
-            --gray-400: #9ca3af;
-            --gray-500: #6b7280;
-            --gray-600: #4b5563;
-            --gray-700: #374151;
-            --gray-800: #1f2937;
-            --gray-900: #111827;
-            
-            /* 字体 */
-            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            
-            /* 尺寸 */
-            --border-radius-sm: 4px;
-            --border-radius-md: 6px;
-            --border-radius-lg: 8px;
-            --border-radius-xl: 12px;
-            --border-radius-full: 9999px;
-            
-            /* 布局 */
-            --sidebar-width: 260px;
-            --header-height: 60px;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: var(--font-sans);
-            background-color: var(--gray-50);
-            color: var(--gray-900);
-            min-height: 100vh;
-            line-height: 1.5;
-            overflow-x: hidden;
-        }
-        
-        a {
-            text-decoration: none;
-            color: inherit;
-        }
-        
-        /* 布局组件 */
-        .admin-layout {
-            display: flex;
-            min-height: 100vh;
-        }
-        
-        /* 侧边栏 */
-        .admin-sidebar {
-            position: fixed;
-            width: var(--sidebar-width);
-            background: linear-gradient(135deg, var(--gray-900) 0%, var(--gray-800) 100%);
-            height: 100vh;
-            color: white;
-            z-index: 100;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-            overflow-y: auto;
-            overflow-x: hidden;
-        }
-        
-        .admin-sidebar-inner {
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .sidebar-logo {
-            padding: 1.5rem 1rem;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .sidebar-logo-icon {
-            width: 42px;
-            height: 42px;
-            background: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: var(--border-radius-md);
-        }
-        
-        .sidebar-logo-icon i {
-            font-size: 1.25rem;
-            color: var(--primary);
-        }
-        
-        .sidebar-logo-text {
-            font-weight: 700;
-            font-size: 1.25rem;
-            letter-spacing: 0.5px;
-        }
-        
-        .sidebar-nav {
-            padding: 1.5rem 0;
-            flex: 1;
-        }
-        
-        .sidebar-section {
-            margin-bottom: 1.5rem;
-            padding: 0 1rem;
-        }
-        
-        .sidebar-section-title {
-            text-transform: uppercase;
-            font-size: 0.7rem;
-            font-weight: 700;
-            letter-spacing: 1px;
-            color: var(--gray-400);
-            margin-bottom: 0.75rem;
-            padding: 0 0.5rem;
-        }
-        
-        .sidebar-menu {
-            list-style: none;
-        }
-        
-        .sidebar-menu-item {
-            margin-bottom: 0.25rem;
-        }
-        
-        .sidebar-menu-link {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.625rem 0.75rem;
-            border-radius: var(--border-radius-md);
-            color: var(--gray-300);
-            font-weight: 500;
-            font-size: 0.875rem;
-            transition: all 0.2s ease;
-        }
-        
-        .sidebar-menu-link:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-        }
-        
-        .sidebar-menu-link.active {
-            background: var(--primary);
-            color: white;
-            box-shadow: 0 4px 10px rgba(94, 114, 228, 0.3);
-        }
-        
-        .sidebar-menu-link i {
-            width: 20px;
-            text-align: center;
-            font-size: 1rem;
-        }
-        
-        .sidebar-menu-link .sidebar-badge {
-            margin-left: auto;
-            font-size: 0.75rem;
-            border-radius: var(--border-radius-full);
-            padding: 0.15rem 0.5rem;
-            background: rgba(255, 255, 255, 0.1);
-        }
-        
-        .sidebar-user {
-            padding: 1rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-        
-        .sidebar-user-avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: var(--border-radius-full);
-            background: var(--primary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            color: white;
-        }
-        
-        .sidebar-user-info {
-            overflow: hidden;
-        }
-        
-        .sidebar-user-name {
-            font-weight: 600;
-            font-size: 0.875rem;
-            color: white;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        .sidebar-user-role {
-            font-size: 0.75rem;
-            color: var(--gray-400);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        /* 主内容区 */
-        .admin-main {
-            flex: 1;
-            margin-left: var(--sidebar-width);
-            min-height: 100vh;
-            background: var(--gray-50);
-            display: flex;
-            flex-direction: column;
-        }
-        
-        /* 头部导航 */
-        .admin-header {
-            height: var(--header-height);
-            background: white;
-            border-bottom: 1px solid var(--gray-200);
-            display: flex;
-            align-items: center;
-            padding: 0 1.5rem;
-            position: sticky;
-            top: 0;
-            z-index: 99;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-        }
-        
-        .header-title {
-            font-weight: 600;
-            font-size: 1.25rem;
-            flex: 1;
-        }
-        
-        .header-actions {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        
-        .header-action-btn {
-            width: 36px;
-            height: 36px;
-            border-radius: var(--border-radius-full);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--gray-100);
-            color: var(--gray-700);
-            cursor: pointer;
-            transition: all 0.2s ease;
-            position: relative;
-        }
-        
-        .header-action-btn:hover {
-            background: var(--gray-200);
-            color: var(--gray-900);
-        }
-        
-        .header-action-badge {
-            position: absolute;
-            top: -2px;
-            right: -2px;
-            width: 16px;
-            height: 16px;
-            border-radius: var(--border-radius-full);
-            background: var(--danger);
-            color: white;
-            font-size: 0.6rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-        }
-        
-        /* 内容区 */
-        .admin-content {
-            flex: 1;
-            padding: 1.5rem;
-            position: relative;
-        }
-        
-        /* 卡片 */
-        .card {
-            background: white;
-            border-radius: var(--border-radius-lg);
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-            margin-bottom: 1.5rem;
-            transition: all 0.3s ease;
-        }
-        
-        .card:hover {
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            transform: translateY(-2px);
-        }
-        
-        .card-header {
-            padding: 1.25rem 1.5rem;
-            border-bottom: 1px solid var(--gray-200);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        
-        .card-title {
-            font-size: 1rem;
-            font-weight: 600;
-            color: var(--gray-900);
-            margin: 0;
-        }
-        
-        .card-subtitle {
-            font-size: 0.875rem;
-            color: var(--gray-500);
-            margin-top: 0.25rem;
-        }
-        
-        .card-body {
-            padding: 1.5rem;
-        }
-        
-        .card-footer {
-            border-top: 1px solid var(--gray-200);
-            padding: 1rem 1.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 0.75rem;
-        }
-        
-        /* 统计卡片 */
-        .stats-card {
-            display: flex;
-            align-items: center;
-            padding: 1.5rem;
-        }
-        
-        .stats-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: var(--border-radius-lg);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.25rem;
-            margin-right: 1rem;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        }
-        
-        .stats-icon.primary {
-            background: var(--primary);
-            color: white;
-        }
-        
-        .stats-icon.success {
-            background: var(--success);
-            color: white;
-        }
-        
-        .stats-icon.warning {
-            background: var(--warning);
-            color: white;
-        }
-        
-        .stats-icon.danger {
-            background: var(--danger);
-            color: white;
-        }
-        
-        .stats-info {
-            flex: 1;
-        }
-        
-        .stats-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 0.25rem;
-        }
-        
-        .stats-label {
-            font-size: 0.875rem;
-            color: var(--gray-500);
-            margin: 0;
-        }
-        
-        .stats-change {
-            display: flex;
-            align-items: center;
-            font-size: 0.75rem;
-            font-weight: 500;
-            margin-top: 0.5rem;
-        }
-        
-        .stats-change.positive {
-            color: var(--success);
-        }
-        
-        .stats-change.negative {
-            color: var(--danger);
-        }
-        
-        .stats-change i {
-            margin-right: 0.25rem;
-        }
-        
-        /* 按钮 */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 500;
-            font-size: 0.875rem;
-            padding: 0.5rem 1rem;
-            border-radius: var(--border-radius-md);
-            border: none;
-            cursor: pointer;
-            transition: all 0.15s ease;
-            gap: 0.5rem;
-        }
-        
-        .btn-primary {
-            background-color: var(--primary);
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background-color: var(--primary-darker);
-        }
-        
-        .btn-success {
-            background-color: var(--success);
-            color: white;
-        }
-        
-        .btn-success:hover {
-            filter: brightness(0.95);
-        }
-        
-        .btn-danger {
-            background-color: var(--danger);
-            color: white;
-        }
-        
-        .btn-danger:hover {
-            filter: brightness(0.95);
-        }
-        
-        .btn-light {
-            background-color: var(--gray-200);
-            color: var(--gray-700);
-        }
-        
-        .btn-light:hover {
-            background-color: var(--gray-300);
-        }
-        
-        .btn-icon {
-            width: 36px;
-            height: 36px;
-            padding: 0;
-            border-radius: var(--border-radius-full);
-        }
-        
-        /* 表格 */
-        .table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        
-        .table th {
-            text-align: left;
-            padding: 0.75rem 1rem;
-            font-weight: 600;
-            font-size: 0.875rem;
-            color: var(--gray-700);
-            background: var(--gray-50);
-            border-bottom: 1px solid var(--gray-200);
-        }
-        
-        .table td {
-            padding: 0.75rem 1rem;
-            font-size: 0.875rem;
-            border-bottom: 1px solid var(--gray-200);
-            vertical-align: middle;
-        }
-        
-        .table tr:last-child td {
-            border-bottom: none;
-        }
-        
-        .table tbody tr {
-            transition: all 0.15s ease;
-        }
-        
-        .table tbody tr:hover {
-            background-color: var(--gray-50);
-        }
-        
-        .table-actions {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        /* 表单 */
-        .form-group {
-            margin-bottom: 1.25rem;
-        }
-        
-        .form-label {
-            display: block;
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: var(--gray-700);
-            margin-bottom: 0.5rem;
-        }
-        
-        .form-control {
-            width: 100%;
-            padding: 0.625rem 0.75rem;
-            font-size: 0.875rem;
-            color: var(--gray-900);
-            background-color: white;
-            border: 1px solid var(--gray-300);
-            border-radius: var(--border-radius-md);
-            transition: all 0.15s ease;
-        }
-        
-        .form-control:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(94, 114, 228, 0.1);
-        }
-        
-        .form-text {
-            font-size: 0.75rem;
-            color: var(--gray-500);
-            margin-top: 0.375rem;
-        }
-        
-        /* 网格系统 */
-        .row {
-            display: flex;
-            flex-wrap: wrap;
-            margin: -0.75rem;
-        }
-        
-        .col {
-            flex: 1;
-            padding: 0.75rem;
-        }
-        
-        .col-3 {
-            width: 25%;
-            padding: 0.75rem;
-        }
-        
-        .col-4 {
-            width: 33.333333%;
-            padding: 0.75rem;
-        }
-        
-        .col-6 {
-            width: 50%;
-            padding: 0.75rem;
-        }
-        
-        .col-8 {
-            width: 66.666667%;
-            padding: 0.75rem;
-        }
-        
-        .col-12 {
-            width: 100%;
-            padding: 0.75rem;
-        }
-        
-        /* 实用工具 */
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.35em 0.65em;
-            font-size: 0.75em;
-            font-weight: 700;
-            line-height: 1;
-            color: white;
-            text-align: center;
-            white-space: nowrap;
-            vertical-align: baseline;
-            border-radius: var(--border-radius-full);
-        }
-        
-        .badge-primary {
-            background-color: var(--primary);
-        }
-        
-        .badge-success {
-            background-color: var(--success);
-        }
-        
-        .badge-warning {
-            background-color: var(--warning);
-        }
-        
-        .badge-danger {
-            background-color: var(--danger);
-        }
-        
-        /* 加载动画 */
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-        }
-        
-        .loading-overlay.show {
-            opacity: 1;
-            visibility: visible;
-        }
-        
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid var(--gray-200);
-            border-top-color: var(--primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-        
-        /* 响应式布局 */
-        @media (max-width: 1024px) {
-            .col-3, .col-4 {
-                width: 50%;
-            }
-        }
-        
-        @media (max-width: 768px) {
-            .admin-sidebar {
-                transform: translateX(-100%);
-            }
-            
-            .admin-sidebar.show {
-                transform: translateX(0);
-            }
-            
-            .admin-main {
-                margin-left: 0;
-            }
-            
-            .sidebar-toggle {
-                display: block;
-            }
-            
-            .col-3, .col-4, .col-6, .col-8 {
-                width: 100%;
-            }
-        }
-        
-        @media (max-width: 576px) {
-            .admin-content {
-                padding: 1rem;
-            }
-        }
-        
-        /* 动画和过渡 */
-        .fade-in {
-            animation: fadeIn 0.3s ease;
-        }
-        
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        /* 自定义滚动条 */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: var(--gray-400);
-            border-radius: 3px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--gray-500);
-        }
+        /* 页面特定的样式可以放在这里 */
+        {% block custom_css %}{% endblock %}
     </style>
     {% block head_extra %}{% endblock %}
 </head>
@@ -747,7 +21,7 @@
             <div class="admin-sidebar-inner">
                 <div class="sidebar-logo">
                     <div class="sidebar-logo-icon">
-                        <i class="fas fa-brain"></i>
+                        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="IdeaSphere Logo" width="42" height="42">
                     </div>
                     <div class="sidebar-logo-text">IdeaSphere</div>
                 </div>
@@ -763,20 +37,20 @@
                                 </a>
                             </li>
                             <li class="sidebar-menu-item">
-                                <a href="{{ url_for('admin_users') }}" class="sidebar-menu-link {% if request.endpoint == 'admin_users' %}active{% endif %}">
+                                <a href="{{ url_for('admin_users') }}" class="sidebar-menu-link {% if request.endpoint == 'admin_users' or request.endpoint == 'admin_user_detail' %}active{% endif %}">
                                     <i class="fas fa-users"></i>
                                     <span>用户管理</span>
                                     <span class="sidebar-badge">{{ user_count }}</span>
                                 </a>
                             </li>
                             <li class="sidebar-menu-item">
-                                <a href="{{ url_for('admin_sections') }}" class="sidebar-menu-link {% if request.endpoint == 'admin_sections' %}active{% endif %}">
+                                <a href="{{ url_for('admin_sections') }}" class="sidebar-menu-link {% if request.endpoint == 'admin_sections' or request.endpoint == 'create_section' or request.endpoint == 'edit_section' or request.endpoint == 'section_analytics' %}active{% endif %}">
                                     <i class="fas fa-layer-group"></i>
                                     <span>版块管理</span>
                                 </a>
                             </li>
                             <li class="sidebar-menu-item">
-                                <a href="{{ url_for('admin_posts') }}" class="sidebar-menu-link {% if request.endpoint == 'admin_posts' %}active{% endif %}">
+                                <a href="{{ url_for('admin_posts') }}" class="sidebar-menu-link {% if request.endpoint == 'admin_posts' or request.endpoint == 'admin_delete_post' or request.endpoint == 'admin_restore_post' or request.endpoint == 'admin_pin_post' %}active{% endif %}">
                                     <i class="fas fa-file-alt"></i>
                                     <span>帖子管理</span>
                                 </a>
@@ -791,17 +65,17 @@
                     </div>
                     
                     <div class="sidebar-section">
-                        <div class="sidebar-section-title">系统设置</div>
+                        <div class="sidebar-section-title">系统</div>
                         <ul class="sidebar-menu">
                             <li class="sidebar-menu-item">
-                                <a href="{{ url_for('admin_settings') if 'admin_settings' in request.url_rule.endpoint.split('_') else '#' }}" class="sidebar-menu-link {% if request.endpoint == 'admin_settings' %}active{% endif %}">
+                                <a href="{{ url_for('admin_settings') }}" class="sidebar-menu-link {% if request.endpoint == 'admin_settings' %}active{% endif %}">
                                     <i class="fas fa-cog"></i>
                                     <span>网站设置</span>
                                 </a>
                             </li>
                             <li class="sidebar-menu-item">
-                                <a href="{{ url_for('admin_logs') if 'admin_logs' in request.url_rule.endpoint.split('_') else '#' }}" class="sidebar-menu-link {% if request.endpoint == 'admin_logs' %}active{% endif %}">
-                                    <i class="fas fa-list"></i>
+                                <a href="{{ url_for('admin_logs') }}" class="sidebar-menu-link {% if request.endpoint == 'admin_logs' %}active{% endif %}">
+                                    <i class="fas fa-history"></i>
                                     <span>系统日志</span>
                                 </a>
                             </li>
@@ -815,105 +89,38 @@
                     </div>
                     <div class="sidebar-user-info">
                         <div class="sidebar-user-name">{{ g.user.username }}</div>
-                        <div class="sidebar-user-role">管理员</div>
+                        <div class="sidebar-user-role">{{ g.user.role }}</div>
                     </div>
                 </div>
             </div>
         </aside>
         
-        <!-- 主内容区 -->
+        <!-- 主要内容区域 -->
         <main class="admin-main">
-            <header class="admin-header">
-                <h1 class="header-title">{% block header_title %}管理后台{% endblock %}</h1>
-                
-                <div class="header-actions">
-                    <a href="{{ url_for('index') }}" class="header-action-btn" title="前往首页">
-                        <i class="fas fa-globe"></i>
-                    </a>
-                    
-                    <div class="header-action-btn" id="notificationBtn" title="通知">
-                        <i class="fas fa-bell"></i>
-                        <span class="header-action-badge">2</span>
+            <div class="admin-header">
+                <h1 class="admin-title">{% block header_title %}控制面板{% endblock %}</h1>
+                <p class="admin-subtitle">{% block header_subtitle %}管理及监控您的论坛{% endblock %}</p>
                     </div>
                     
-                    <div class="header-action-btn" id="userMenuBtn" title="用户菜单">
-                        <i class="fas fa-user"></i>
-                    </div>
-                </div>
-            </header>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
             
-            <div class="admin-content">
                 {% block content %}{% endblock %}
-            </div>
         </main>
     </div>
     
-    <!-- 加载动画 -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="spinner"></div>
-    </div>
+    <!-- 基础脚本 -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
     
-    <!-- JavaScript -->
-    <script>
-        // 页面加载动画
-        document.addEventListener('DOMContentLoaded', function() {
-            // 初始化加载状态
-            const loadingOverlay = document.getElementById('loadingOverlay');
-            
-            // 显示加载状态
-            function showLoading() {
-                loadingOverlay.classList.add('show');
-            }
-            
-            // 隐藏加载状态
-            function hideLoading() {
-                loadingOverlay.classList.remove('show');
-            }
-            
-            // 为表单提交和链接点击添加加载动画
-            document.querySelectorAll('form').forEach(form => {
-                form.addEventListener('submit', function() {
-                    showLoading();
-                });
-            });
-            
-            document.querySelectorAll('a[href]:not([target="_blank"])').forEach(link => {
-                link.addEventListener('click', function() {
-                    showLoading();
-                });
-            });
-            
-            // 在移动设备上切换侧边栏
-            const sidebarToggle = document.querySelector('.sidebar-toggle');
-            const sidebar = document.querySelector('.admin-sidebar');
-            
-            if (sidebarToggle) {
-                sidebarToggle.addEventListener('click', function() {
-                    sidebar.classList.toggle('show');
-                });
-            }
-            
-            // 卡片动画
-            const observerOptions = {
-                root: null,
-                rootMargin: '0px',
-                threshold: 0.1
-            };
-            
-            const observer = new IntersectionObserver((entries, observer) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('fade-in');
-                        observer.unobserve(entry.target);
-                    }
-                });
-            }, observerOptions);
-            
-            document.querySelectorAll('.card').forEach(card => {
-                observer.observe(card);
-            });
-        });
-    </script>
+    <!-- 自定义脚本 -->
+    <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
     {% block scripts %}{% endblock %}
 </body>
 </html> 

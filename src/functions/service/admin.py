@@ -1,4 +1,4 @@
-from flask import abort, g, render_template, url_for, flash, redirect, request
+from flask import abort, g, render_template, url_for, flash, redirect, request, jsonify, send_file
 
 from src.functions.database.models import Report, User, Post, Comment, Section, Like, db
 from datetime import datetime, timedelta
@@ -29,6 +29,9 @@ def admin_panel_logic():
     total_likes = db.session.query(func.count(Like.id)).scalar()
     new_likes = Like.query.filter(Like.created_at >= last_week).count()
     new_likes_percent = round((new_likes / total_likes * 100) if total_likes > 0 else 0, 1)
+    
+    # 获取未处理的举报数量
+    reports_count = Report.query.filter_by(status='pending').count()
     
     # 获取最近的用户和帖子
     latest_users = User.query.order_by(User.created_at.desc()).limit(5).all()
@@ -167,17 +170,103 @@ def admin_panel_logic():
                           latest_users=latest_users, 
                           latest_posts=latest_posts,
                           popular_posts=popular_posts,
-                          trends=trends,
-                          section_data=section_data,
+                          dates=dates,
+                          posts_data=list(posts_by_date.values()),
+                          comments_data=list(comments_by_date.values()),
+                          users_data=list(users_by_date.values()),
+                          section_names=section_names,
+                          section_counts=section_post_counts,
                           sections=sections,
                           current_date=current_date,
+                          reports_count=reports_count,
                           active_page='dashboard')
 
 
 def manage_users_logic():
-    if not hasattr(g, 'user') or not g.user or g.user.role not in ['admin', 'moderator']:
+    """用户管理页面逻辑"""
+    # 权限检查
+    if not hasattr(g, 'user') or not g.user or g.user.role != 'admin':
         abort(403)
 
+    # 处理添加用户或编辑用户的POST请求
+    if request.method == 'POST':
+        action = request.form.get('action')
+        
+        # 添加用户
+        if action == 'add':
+            username = request.form.get('username')
+            email = request.form.get('email')
+            password = request.form.get('password')
+            role = request.form.get('role')
+            
+            if not all([username, email, password, role]):
+                flash('请填写所有必填字段', 'danger')
+                return redirect(url_for('admin_users'))
+            
+            # 检查用户名和邮箱是否已存在
+            if User.query.filter_by(username=username).first():
+                flash('用户名已存在', 'danger')
+                return redirect(url_for('admin_users'))
+            
+            if User.query.filter_by(email=email).first():
+                flash('邮箱已存在', 'danger')
+                return redirect(url_for('admin_users'))
+            
+            # 创建新用户
+            new_user = User(
+                username=username,
+                email=email,
+                role=role,
+                is_active=True
+            )
+            new_user.set_password(password)
+            
+            try:
+                db.session.add(new_user)
+                db.session.commit()
+                flash('用户添加成功', 'success')
+            except Exception as e:
+                db.session.rollback()
+                flash(f'添加用户失败: {str(e)}', 'danger')
+            
+            return redirect(url_for('admin_users'))
+            
+        # 编辑用户
+        elif action == 'edit':
+            user_id = request.form.get('user_id')
+            username = request.form.get('username')
+            email = request.form.get('email')
+            password = request.form.get('password')
+            role = request.form.get('role')
+            
+            # 检查必填字段
+            if not all([user_id, username, email, role]):
+                flash('缺少必要信息', 'error')
+                return redirect(url_for('admin_users'))
+            
+            # 查找用户
+            user = db.session.get(User, user_id)
+            if not user:
+                flash('用户不存在', 'error')
+                return redirect(url_for('admin_users'))
+            
+            # 更新用户信息
+            user.username = username
+            user.email = email
+            if password:
+                user.set_password(password)
+            user.role = role
+            
+            try:
+                db.session.commit()
+                flash('用户信息已更新', 'success')
+            except Exception as e:
+                db.session.rollback()
+                flash(f'更新失败: {str(e)}', 'error')
+            
+            return redirect(url_for('admin_users'))
+    
+    # 处理GET请求，显示用户列表
     # 获取请求参数
     page = request.args.get('page', 1, type=int)
     per_page = 20
@@ -186,6 +275,9 @@ def manage_users_logic():
     sort_by = request.args.get('sort', 'created_at')
     sort_order = request.args.get('order', 'desc')
     
+    # 获取未处理的举报数量
+    reports_count = Report.query.filter_by(status='pending').count()
+
     # 处理导出CSV请求
     if request.args.get('export') == 'csv':
         return export_users_csv(role, search_query)
@@ -193,10 +285,72 @@ def manage_users_logic():
     # 处理添加/编辑用户的POST请求
     if request.method == 'POST':
         # 确保只有管理员可以添加/编辑用户
-        if g.user.role != 'admin':
+        if g.user.role != 'admin' and request.form.get('action') != 'toggle_status':
             flash('只有管理员可以执行此操作', 'danger')
             return redirect(url_for('admin_users'))
         
+        # 处理状态切换操作
+        if request.form.get('action') == 'toggle_status':
+            user_id = request.form.get('user_id')
+            is_active = request.form.get('is_active') == 'true'
+            user = db.session.get(User, user_id)
+            if user:
+                user.is_active = is_active
+                db.session.commit()
+                return jsonify({'success': True})
+            else:
+                return jsonify({'success': False, 'message': '用户不存在'})
+                
+        # 处理批量操作
+        elif request.form.get('action') in ['bulk_activate', 'bulk_deactivate', 'bulk_delete']:
+            action = request.form.get('action')
+            user_ids = request.form.get('user_ids', '').split(',')
+            
+            try:
+                if action == 'bulk_activate':
+                    for user_id in user_ids:
+                        user = db.session.get(User, user_id)
+                        if user:
+                            user.is_active = True
+                    db.session.commit()
+                    flash(f'已成功启用 {len(user_ids)} 个用户', 'success')
+                    
+                elif action == 'bulk_deactivate':
+                    for user_id in user_ids:
+                        user = db.session.get(User, user_id)
+                        if user:
+                            user.is_active = False
+                    db.session.commit()
+                    flash(f'已成功禁用 {len(user_ids)} 个用户', 'success')
+                    
+                elif action == 'bulk_delete':
+                    # 仅管理员可以删除用户
+                    if g.user.role != 'admin':
+                        flash('只有管理员可以删除用户', 'danger')
+                        return redirect(url_for('admin_users'))
+                        
+                    for user_id in user_ids:
+                        user = db.session.get(User, user_id)
+                        if user:
+                            db.session.delete(user)
+                    db.session.commit()
+                    flash(f'已成功删除 {len(user_ids)} 个用户', 'success')
+            except Exception as e:
+                flash(f'操作失败: {str(e)}', 'danger')
+                
+            return redirect(url_for('admin_users'))
+                
+        # 处理用户删除操作
+        elif request.form.get('action') == 'delete':
+            user_id = request.form.get('user_id')
+            user = db.session.get(User, user_id)
+            if user:
+                db.session.delete(user)
+                db.session.commit()
+                flash('用户已删除', 'success')
+                return redirect(url_for('admin_users'))
+        
+        # 处理用户编辑或添加
         user_id = request.form.get('user_id')
         username = request.form.get('username')
         email = request.form.get('email')
@@ -210,12 +364,12 @@ def manage_users_logic():
         
         # 编辑现有用户
         if user_id:
-            user = User.query.get(user_id)
+            user = db.session.get(User, user_id)
             if not user:
                 flash('用户不存在', 'danger')
                 return redirect(url_for('admin_users'))
             
-            # 检查用户名和邮箱是否已存在
+            # 检查用户名和邮箱是否已被其他用户使用
             existing_username = User.query.filter(User.username == username, User.id != user.id).first()
             if existing_username:
                 flash('用户名已存在', 'danger')
@@ -229,10 +383,14 @@ def manage_users_logic():
             # 更新用户信息
             user.username = username
             user.email = email
-            if password:  # 只有填写了新密码才更新
+            
+            # 如果提供了新密码，则更新密码
+            if password:
                 from werkzeug.security import generate_password_hash
                 user.password = generate_password_hash(password)
-            if role:
+            
+            # 只有管理员可以修改角色
+            if g.user.role == 'admin' and role:
                 user.role = role
             
             db.session.commit()
@@ -289,44 +447,62 @@ def manage_users_logic():
     
     # 应用排序
     if sort_by == 'username':
-        query = query.order_by(User.username.desc() if sort_order == 'desc' else User.username)
-    elif sort_by == 'email':
-        query = query.order_by(User.email.desc() if sort_order == 'desc' else User.email)
-    elif sort_by == 'last_login':
-        query = query.order_by(User.last_login.desc() if sort_order == 'desc' else User.last_login)
-    else:  # 默认按创建时间排序
-        query = query.order_by(User.created_at.desc() if sort_order == 'desc' else User.created_at)
+        query = query.order_by(User.username.asc() if sort_order == 'asc' else User.username.desc())
+    elif sort_by == 'role':
+        query = query.order_by(User.role.asc() if sort_order == 'asc' else User.role.desc())
+    elif sort_by == 'created_at':
+        query = query.order_by(User.created_at.asc() if sort_order == 'asc' else User.created_at.desc())
     
-    # 计算总数和分页
+    # 获取总数
     total = query.count()
-    pages_count = (total + per_page - 1) // per_page if total > 0 else 1
-    offset = (page - 1) * per_page
-    users = query.offset(offset).limit(per_page).all()
     
-    # 构建分页信息
-    pages = range(max(1, page - 2), min(pages_count + 1, page + 3))
-    pagination = {
-        'page': page,
-        'per_page': per_page,
-        'total': total,
-        'pages': list(pages),
-        'has_prev': page > 1,
-        'has_next': page < pages_count,
-        'prev_page': page - 1 if page > 1 else None,
-        'next_page': page + 1 if page < pages_count else None,
-        'start': offset + 1 if total > 0 else 0,
-        'end': min(offset + per_page, total)
-    }
-
-    # 计算角色分布
+    # 应用分页
+    users = query.paginate(page=page, per_page=per_page, error_out=False)
+    
+    # 统计各角色用户数量
     roles_count = {
         'admin': User.query.filter_by(role='admin').count(),
         'moderator': User.query.filter_by(role='moderator').count(),
         'user': User.query.filter_by(role='user').count()
     }
     
+    # 计算分页显示
+    pages = []
+    if users.pages <= 5:
+        pages = list(range(1, users.pages + 1))
+    else:
+        if users.page <= 3:
+            pages = list(range(1, 6))
+        elif users.page >= users.pages - 2:
+            pages = list(range(users.pages - 4, users.pages + 1))
+        else:
+            pages = list(range(users.page - 2, users.page + 3))
+    
+    # 计算记录范围    
+    start = (users.page - 1) * per_page + 1
+    end = min(start + per_page - 1, total)
+    
+    # 构建分页信息
+    pagination = {
+        'page': users.page,
+        'per_page': per_page,
+        'total': total,
+        'pages': pages,
+        'has_prev': users.has_prev,
+        'has_next': users.has_next,
+        'prev_page': users.prev_num,
+        'next_page': users.next_num,
+        'start': start,
+        'end': end
+    }
+    
+    # 为每个用户添加帖子数和评论数
+    for user in users.items:
+        user.post_count = Post.query.filter_by(author_id=user.id).count()
+        user.comment_count = Comment.query.filter_by(author_id=user.id).count()
+    
     return render_template('admin/users.html', 
-                          users=users, 
+                          users=users.items, 
                           user_count=total,
                           pagination=pagination,
                           roles_count=roles_count,
@@ -334,15 +510,16 @@ def manage_users_logic():
                           search_query=search_query,
                           sort_by=sort_by,
                           sort_order=sort_order,
+                          reports_count=reports_count,
                           active_page='manage_users')
 
 
 def export_users_csv(role=None, search_query=None):
-    """导出用户数据为CSV格式"""
-    import csv
-    import io
-    from flask import Response
-    
+    """导出用户数据为CSV文件"""
+    # 确保只有管理员可以导出用户数据
+    if not hasattr(g, 'user') or not g.user or g.user.role != 'admin':
+        abort(403)
+
     # 构建查询
     query = User.query
     
@@ -359,10 +536,13 @@ def export_users_csv(role=None, search_query=None):
             )
         )
     
-    # 获取用户数据
+    # 获取所有用户
     users = query.all()
     
-    # 创建CSV文件
+    # 创建CSV数据
+    import csv
+    import io
+    
     output = io.StringIO()
     writer = csv.writer(output)
     
@@ -382,18 +562,161 @@ def export_users_csv(role=None, search_query=None):
         ])
     
     # 创建响应
-    response = Response(
-        output.getvalue(),
-        mimetype='text/csv',
-        headers={'Content-Disposition': f'attachment;filename=users_{datetime.now().strftime("%Y%m%d%H%M%S")}.csv'}
+    output.seek(0)
+    timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+    return send_file(
+        io.BytesIO(output.getvalue().encode('utf-8-sig')),
+        as_attachment=True,
+        download_name=f'users_export_{timestamp}.csv',
+        mimetype='text/csv'
     )
+
+
+def view_user_detail_logic(user_id):
+    """显示用户详情页"""
+    # 权限检查
+    if not hasattr(g, 'user') or not g.user or g.user.role != 'admin':
+        abort(403)
+
+    # 查找用户
+    user = db.session.get(User, user_id)
+    if not user:
+        flash('用户不存在', 'danger')
+        return redirect(url_for('admin_users'))
     
-    return response
+    # 获取用户统计数据
+    post_count = Post.query.filter_by(author_id=user.id).count()
+    comment_count = Comment.query.filter_by(author_id=user.id).count()
+    reports_count = Report.query.filter_by(status='pending').count()
+    user_count = User.query.count()
+    
+    # 获取最近的帖子和评论
+    recent_posts = Post.query.filter_by(author_id=user.id).order_by(Post.created_at.desc()).limit(5).all()
+    recent_comments = Comment.query.filter_by(author_id=user.id).order_by(Comment.created_at.desc()).limit(5).all()
+    
+    return render_template('admin/user_detail.html',
+                          user=user,
+                          post_count=post_count,
+                          comment_count=comment_count,
+                          recent_posts=recent_posts,
+                          recent_comments=recent_comments,
+                          reports_count=reports_count,
+                          user_count=user_count,
+                          active_page='manage_users')
+
+
+def delete_user_logic(user_id):
+    """删除用户"""
+    # 权限检查
+    if not hasattr(g, 'user') or not g.user or g.user.role != 'admin':
+        return jsonify({'success': False, 'error': '无权操作'}), 403
+    
+    # 查找用户
+    user = db.session.get(User, user_id)
+    if not user:
+        return jsonify({'success': False, 'error': '用户不存在'}), 404
+    
+    # 不允许删除自己
+    if user.id == g.user.id:
+        return jsonify({'success': False, 'error': '不能删除当前登录的用户'}), 400
+    
+    try:
+        # 删除用户
+        db.session.delete(user)
+        db.session.commit()
+        return jsonify({'success': True, 'message': '用户已成功删除'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': f'删除失败: {str(e)}'}), 500
+
+
+def toggle_user_status_logic(user_id):
+    """切换用户状态（启用/禁用）"""
+    # 确保只有管理员可以修改用户状态
+    if not hasattr(g, 'user') or not g.user or g.user.role != 'admin':
+        return jsonify({'success': False, 'error': '无权操作'}), 403
+    
+    # 获取请求数据
+    data = request.json
+    action = data.get('action')
+    
+    if action not in ['activate', 'deactivate']:
+        return jsonify({'success': False, 'error': '无效的操作'}), 400
+    
+    # 查找用户
+    user = db.session.get(User, user_id)
+    if not user:
+        return jsonify({'success': False, 'error': '用户不存在'}), 404
+    
+    # 更新用户状态
+    try:
+        if action == 'activate':
+            user.is_active = True
+            message = '用户已启用'
+        else:
+            user.is_active = False
+            message = '用户已禁用'
+        
+        db.session.commit()
+        return jsonify({'success': True, 'message': message})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': f'操作失败: {str(e)}'}), 500
+
+
+def bulk_users_action_logic():
+    """批量处理用户操作（批量启用/禁用/删除）"""
+    # 确保只有管理员可以执行批量操作
+    if not hasattr(g, 'user') or not g.user or g.user.role != 'admin':
+        return jsonify({'success': False, 'error': '无权操作'}), 403
+    
+    # 获取请求数据
+    data = request.json
+    action = data.get('action')
+    user_ids = data.get('user_ids', [])
+    
+    if not user_ids:
+        return jsonify({'success': False, 'error': '未选择用户'}), 400
+    
+    if action not in ['activate', 'deactivate', 'delete']:
+        return jsonify({'success': False, 'error': '无效的操作'}), 400
+    
+    try:
+        affected_count = 0
+        for user_id in user_ids:
+            user = db.session.get(User, user_id)
+            if user:
+                if action == 'activate':
+                    user.is_active = True
+                elif action == 'deactivate':
+                    user.is_active = False
+                elif action == 'delete':
+                    db.session.delete(user)
+                affected_count += 1
+        
+        db.session.commit()
+        
+        action_messages = {
+            'activate': '启用',
+            'deactivate': '禁用',
+            'delete': '删除'
+        }
+        
+        return jsonify({
+            'success': True, 
+            'message': f'已成功{action_messages[action]}{affected_count}个用户'
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': f'操作失败: {str(e)}'}), 500
 
 
 def manage_reports_logic():
     if g.role not in ['admin', 'moderator']:
         abort(403)
+
+    # 获取用户总数
+    user_count = User.query.count()
 
     reports = Report.query.all()
     
@@ -415,6 +738,8 @@ def manage_reports_logic():
     return render_template('manage_reports.html', 
                           reports=reports, 
                           report_count=total_reports,
+                          reports_count=total_reports,
+                          user_count=user_count,
                           pagination=pagination)
 
 
@@ -423,6 +748,10 @@ def manage_posts_logic():
     if not hasattr(g, 'user') or not g.user or g.user.role not in ['admin', 'moderator']:
         abort(403)
 
+    # 获取用户总数和未处理举报数
+    user_count = User.query.count()
+    reports_count = Report.query.filter_by(status='pending').count()
+    
     # 获取请求参数
     page = request.args.get('page', 1, type=int)
     per_page = 20
@@ -564,7 +893,9 @@ def manage_posts_logic():
                           search_query=search_query,
                           sort_by=sort_by,
                           sort_order=sort_order,
-                          active_page='manage_posts')
+                          active_page='manage_posts',
+                          user_count=user_count,
+                          reports_count=reports_count)
 
 
 def delete_post_logic(post_id):

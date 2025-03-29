@@ -1,0 +1,676 @@
+{% extends "admin/base.html" %}
+
+{% block title %}帖子管理 - IdeaSphere 管理后台{% endblock %}
+
+{% block head_extra %}
+<link href="{{ url_for('static', filename='css/admin-posts.css') }}" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+{% endblock %}
+
+{% block custom_css %}
+/* 确保这些样式只影响主内容区域，不影响侧边栏 */
+.admin-main .stats-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.admin-main .stat-card {
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.admin-main .stat-card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background-color: rgba(45, 206, 137, 0.1);
+    color: #2dce89;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+.admin-main .stat-card-content {
+    flex: 1;
+    margin-left: 1rem;
+}
+
+.admin-main .stat-card-value {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: #344767;
+    margin-bottom: 0.25rem;
+}
+
+.admin-main .stat-card-label {
+    font-size: 0.875rem;
+    color: #67748e;
+}
+
+/* 其余样式保持不变但添加admin-main前缀 */
+.admin-main .function-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    gap: 1rem;
+}
+
+.admin-main .search-box {
+    position: relative;
+    min-width: 240px;
+}
+
+.admin-main .search-box input {
+    padding: 0.625rem 1rem 0.625rem 2.5rem;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    width: 100%;
+}
+
+.admin-main .search-box i {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #a0aec0;
+}
+
+.admin-main .filters {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.admin-main .actions {
+    margin-left: auto;
+}
+
+.admin-main .posts-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.admin-main .posts-table th,
+.admin-main .posts-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.admin-main .table-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.admin-main .action-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #67748e;
+    background-color: #f8f9fa;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.admin-main .action-btn:hover {
+    background-color: #e9ecef;
+    color: #344767;
+}
+
+.admin-main .action-btn.delete-post-btn:hover {
+    background-color: #fb634010;
+    color: #fb6340;
+}
+
+.admin-main .action-btn.restore-post-btn:hover {
+    background-color: #2dce8910;
+    color: #2dce89;
+}
+
+.admin-main .action-btn.pin-post-btn:hover,
+.admin-main .action-btn.unpin-post-btn:hover {
+    background-color: #ffc10710;
+    color: #ffc107;
+}
+
+.admin-main .bulk-selection {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.admin-main .bulk-count {
+    font-size: 0.875rem;
+    color: #67748e;
+}
+
+.admin-main .bulk-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.admin-main .bulk-selection .btn {
+    font-size: 0.875rem;
+    padding: 0.375rem 0.75rem;
+}
+
+.admin-main .hidden {
+    display: none !important;
+}
+
+.admin-main .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.admin-main .pagination-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #67748e;
+    background-color: #f8f9fa;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.admin-main .pagination-btn:hover:not(.disabled) {
+    background-color: #e9ecef;
+    color: #344767;
+}
+
+.admin-main .pagination-btn.active {
+    background-color: #263849;
+    color: white;
+}
+
+.admin-main .pagination-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.admin-main .checkbox-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+}
+
+.admin-main .custom-checkbox {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+.admin-main .checkbox-wrapper label {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 20px;
+    width: 20px;
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.admin-main .custom-checkbox:checked ~ label {
+    background-color: #263849;
+    border-color: #263849;
+}
+
+.admin-main .checkbox-wrapper label:after {
+    content: "";
+    position: absolute;
+    display: none;
+    left: 7px;
+    top: 3px;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.admin-main .custom-checkbox:checked ~ label:after {
+    display: block;
+}
+
+@media (max-width: 991px) {
+    .admin-main .stats-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 767px) {
+    .admin-main .stats-cards {
+        grid-template-columns: 1fr;
+    }
+}
+{% endblock %}
+
+{% block header_title %}帖子管理{% endblock %}
+{% block header_subtitle %}管理、编辑和监控所有帖子{% endblock %}
+
+{% block content %}
+<!-- 统计卡片 -->
+<div class="stats-cards">
+    <div class="stat-card">
+        <div class="stat-card-icon">
+            <i class="fas fa-file-alt"></i>
+        </div>
+        <div class="stat-card-content">
+            <div class="stat-card-value">{{ total_posts }}</div>
+            <div class="stat-card-label">总帖子数</div>
+        </div>
+        <div class="stat-card-chart">
+            <span class="growth-indicator {% if growth_data.posts > 0 %}positive{% elif growth_data.posts < 0 %}negative{% endif %}">
+                {% if growth_data.posts > 0 %}
+                <i class="fas fa-arrow-up"></i> +{{ growth_data.posts }}%
+                {% elif growth_data.posts < 0 %}
+                <i class="fas fa-arrow-down"></i> {{ growth_data.posts }}%
+                {% else %}
+                <i class="fas fa-equals"></i> 0%
+                {% endif %}
+            </span>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-card-icon">
+            <i class="fas fa-comments"></i>
+        </div>
+        <div class="stat-card-content">
+            <div class="stat-card-value">{{ total_comments }}</div>
+            <div class="stat-card-label">总评论数</div>
+        </div>
+        <div class="stat-card-chart">
+            <span class="growth-indicator {% if growth_data.comments > 0 %}positive{% elif growth_data.comments < 0 %}negative{% endif %}">
+                {% if growth_data.comments > 0 %}
+                <i class="fas fa-arrow-up"></i> +{{ growth_data.comments }}%
+                {% elif growth_data.comments < 0 %}
+                <i class="fas fa-arrow-down"></i> {{ growth_data.comments }}%
+                {% else %}
+                <i class="fas fa-equals"></i> 0%
+                {% endif %}
+            </span>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-card-icon">
+            <i class="fas fa-thumbtack"></i>
+        </div>
+        <div class="stat-card-content">
+            <div class="stat-card-value">{{ pinned_posts }}</div>
+            <div class="stat-card-label">置顶帖子</div>
+        </div>
+        <div class="stat-card-chart">
+            <i class="fas fa-chart-bar"></i>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-card-icon">
+            <i class="fas fa-trash-alt"></i>
+        </div>
+        <div class="stat-card-content">
+            <div class="stat-card-value">{{ deleted_posts }}</div>
+            <div class="stat-card-label">已删除帖子</div>
+        </div>
+        <div class="stat-card-chart">
+            <i class="fas fa-chart-area"></i>
+        </div>
+    </div>
+</div>
+
+<!-- 今日统计 -->
+<div class="today-stats-row">
+    <div class="today-stats-card">
+        <div class="today-stats-header">
+            <h3>今日数据</h3>
+            <div class="today-date">{{ current_date.strftime('%Y-%m-%d') }}</div>
+        </div>
+        <div class="today-stats-content">
+            <div class="today-stat-item">
+                <div class="today-stat-icon"><i class="fas fa-file-alt"></i></div>
+                <div class="today-stat-value">{{ today_stats.posts }}</div>
+                <div class="today-stat-label">新增帖子</div>
+            </div>
+            <div class="today-stat-item">
+                <div class="today-stat-icon"><i class="fas fa-comments"></i></div>
+                <div class="today-stat-value">{{ today_stats.comments }}</div>
+                <div class="today-stat-label">新增评论</div>
+            </div>
+            <div class="today-stat-item">
+                <div class="today-stat-icon"><i class="fas fa-eye"></i></div>
+                <div class="today-stat-value">{{ today_stats.views }}</div>
+                <div class="today-stat-label">今日浏览</div>
+            </div>
+            <div class="today-stat-item">
+                <div class="today-stat-icon"><i class="fas fa-heart"></i></div>
+                <div class="today-stat-value">{{ today_stats.likes }}</div>
+                <div class="today-stat-label">今日点赞</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 图表区域 -->
+<div class="row">
+    <div class="col-8">
+        <div class="card chart-card">
+            <div class="card-header">
+                <h3 class="card-title">活跃趋势</h3>
+                <div class="card-actions">
+                    <div class="time-selector">
+                        <select class="form-select form-select-sm" onchange="handleYearChange(this)">
+                            <option value="">选择年份</option>
+                            {% for y in range(current_date.year - 2, current_date.year + 1) %}
+                            <option value="{{ y }}" {% if request.args.get('year') == y|string %}selected{% endif %}>{{ y }}年</option>
+                            {% endfor %}
+                        </select>
+                        
+                        <select class="form-select form-select-sm" onchange="handleMonthChange(this)" {% if not request.args.get('year') %}disabled{% endif %}>
+                            <option value="">选择月份</option>
+                            {% for m in range(1, 13) %}
+                            <option value="{{ m }}" {% if request.args.get('month') == m|string %}selected{% endif %}>{{ m }}月</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="chart-period-selector">
+                        <button class="btn btn-sm btn-light chart-period-btn" data-period="week">周</button>
+                        <button class="btn btn-sm btn-light chart-period-btn" data-period="month">月</button>
+                        <button class="btn btn-sm btn-light chart-period-btn" data-period="year">年</button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas 
+                        id="activityChart" 
+                        height="300"
+                        data-labels="{{ chart_labels|tojson }}"
+                        data-posts="{{ chart_data.posts|tojson }}"
+                        data-comments="{{ chart_data.comments|tojson }}"
+                        data-views="{{ chart_data.views|tojson }}"
+                        data-likes="{{ chart_data.likes|tojson }}"
+                    ></canvas>
+                </div>
+            </div>
+            <div class="card-footer">
+                <button class="btn btn-sm btn-outline-primary" onclick="exportStatsToCSV()">
+                    <i class="fas fa-download me-1"></i> 导出数据
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="col-4">
+        <div class="card chart-card">
+            <div class="card-header">
+                <h3 class="card-title">版块分布</h3>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas 
+                        id="sectionsChart" 
+                        height="250"
+                        data-labels="{{ section_labels|tojson }}"
+                        data-values="{{ section_data|tojson }}"
+                    ></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 功能区和搜索 -->
+<div class="function-bar">
+    <div class="search-box">
+        <input type="text" id="postSearch" placeholder="搜索帖子...">
+        <i class="fas fa-search"></i>
+    </div>
+    
+    <div class="filters">
+        <div class="dropdown">
+            <button class="btn btn-light dropdown-toggle" type="button" id="filterDropdown">
+                <i class="fas fa-filter"></i> 过滤
+            </button>
+            <div class="dropdown-menu">
+                <a class="dropdown-item active" data-filter="all">全部帖子</a>
+                <a class="dropdown-item" data-filter="pinned">置顶帖子</a>
+                <a class="dropdown-item" data-filter="recent">最近帖子</a>
+                <a class="dropdown-item" data-filter="most-commented">热门评论</a>
+                <a class="dropdown-item" data-filter="deleted">已删除帖子</a>
+            </div>
+        </div>
+        
+        <div class="dropdown">
+            <button class="btn btn-light dropdown-toggle" type="button" id="sortDropdown">
+                <i class="fas fa-sort"></i> 排序
+            </button>
+            <div class="dropdown-menu">
+                <a class="dropdown-item active" data-sort="date-desc">按日期 (新到旧)</a>
+                <a class="dropdown-item" data-sort="date-asc">按日期 (旧到新)</a>
+                <a class="dropdown-item" data-sort="title-asc">按标题 (A-Z)</a>
+                <a class="dropdown-item" data-sort="title-desc">按标题 (Z-A)</a>
+                <a class="dropdown-item" data-sort="comments-desc">按评论数 (多到少)</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="actions">
+        <button class="btn btn-primary" id="exportPostsBtn">
+            <i class="fas fa-download"></i> 导出数据
+        </button>
+    </div>
+</div>
+
+<!-- 帖子列表 -->
+<div class="card posts-card">
+    <div class="card-header">
+        <h5>帖子列表</h5>
+        <div class="bulk-selection">
+            <span id="selectedCount" class="bulk-count hidden">已选择 0 个帖子</span>
+            <div class="bulk-actions hidden" id="bulkActions">
+                <button class="btn btn-sm btn-warning" id="bulkPinBtn">
+                    <i class="fas fa-thumbtack"></i> 批量置顶
+                </button>
+                <button class="btn btn-sm btn-danger" id="bulkDeleteBtn">
+                    <i class="fas fa-trash-alt"></i> 批量删除
+                </button>
+                <button class="btn btn-sm btn-secondary" id="bulkCancelBtn">
+                    <i class="fas fa-times"></i> 取消选择
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table posts-table" id="postsTable">
+                <thead>
+                    <tr>
+                        <th>
+                            <div class="checkbox-wrapper">
+                                <input type="checkbox" id="selectAllPosts" class="custom-checkbox">
+                                <label for="selectAllPosts"></label>
+                            </div>
+                        </th>
+                        <th>标题</th>
+                        <th>作者</th>
+                        <th>版块</th>
+                        <th>创建时间</th>
+                        <th>评论数</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for post in posts %}
+                    <tr data-post-id="{{ post.id }}" data-title="{{ post.title }}" data-pinned="{{ post.is_pinned }}" data-deleted="{{ post.deleted }}">
+                        <td>
+                            <div class="checkbox-wrapper">
+                                <input type="checkbox" id="post{{ post.id }}" class="post-checkbox custom-checkbox">
+                                <label for="post{{ post.id }}"></label>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="post-title-cell">
+                                {% if post.is_pinned %}
+                                <i class="fas fa-thumbtack pinned-icon"></i>
+                                {% endif %}
+                                <span class="post-title">{{ post.title }}</span>
+                            </div>
+                        </td>
+                        <td>{{ post.author.username }}</td>
+                        <td>
+                            <span class="section-badge" style="background-color: {{ post.section.icon_color }}">
+                                {{ post.section.name }}
+                            </span>
+                        </td>
+                        <td>{{ post.created_at.strftime('%Y-%m-%d') }}</td>
+                        <td>{{ post.comments|length }}</td>
+                        <td>
+                            <span class="status-badge {% if post.deleted %}status-deleted{% elif post.is_pinned %}status-pinned{% else %}status-active{% endif %}">
+                                {% if post.deleted %}已删除{% elif post.is_pinned %}置顶{% else %}正常{% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="table-actions">
+                                <a href="{{ url_for('view_post', post_id=post.id) }}" class="action-btn" title="查看帖子" target="_blank">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ url_for('edit_post', post_id=post.id) }}" class="action-btn" title="编辑帖子">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% if post.is_pinned %}
+                                <button class="action-btn unpin-post-btn" title="取消置顶" data-post-id="{{ post.id }}">
+                                    <i class="fas fa-thumbtack fa-rotate-90"></i>
+                                </button>
+                                {% else %}
+                                <button class="action-btn pin-post-btn" title="置顶帖子" data-post-id="{{ post.id }}">
+                                    <i class="fas fa-thumbtack"></i>
+                                </button>
+                                {% endif %}
+                                
+                                {% if post.deleted %}
+                                <button class="action-btn restore-post-btn" title="恢复帖子" data-post-id="{{ post.id }}">
+                                    <i class="fas fa-trash-restore"></i>
+                                </button>
+                                {% else %}
+                                <button class="action-btn delete-post-btn" title="删除帖子" data-post-id="{{ post.id }}">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer">
+        <div class="pagination-info">
+            显示 {{ pagination.start_idx }} 到 {{ pagination.end_idx }} 条，共 {{ pagination.total }} 条记录
+        </div>
+        <div class="pagination">
+            <a href="{{ url_for('admin_posts', page=pagination.prev_page, filter=filter_type, search=search) }}" class="pagination-btn {% if not pagination.has_prev %}disabled{% endif %}">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            {% for page_num in range(1, pagination.pages + 1) %}
+                {% if page_num == page %}
+                <a href="{{ url_for('admin_posts', page=page_num, filter=filter_type, search=search) }}" class="pagination-btn active">{{ page_num }}</a>
+                {% else %}
+                <a href="{{ url_for('admin_posts', page=page_num, filter=filter_type, search=search) }}" class="pagination-btn">{{ page_num }}</a>
+                {% endif %}
+            {% endfor %}
+            <a href="{{ url_for('admin_posts', page=pagination.next_page, filter=filter_type, search=search) }}" class="pagination-btn {% if not pagination.has_next %}disabled{% endif %}">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- 确认删除模态框 -->
+<div class="modal fade" id="deletePostModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">删除帖子</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>确定要删除此帖子吗？</p>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="permanentDelete">
+                    <label class="form-check-label" for="permanentDelete">
+                        永久删除 (此操作不可恢复)
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">删除</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 批量操作确认模态框 -->
+<div class="modal fade" id="bulkActionModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="bulkActionTitle">批量操作</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="bulkActionConfirmMessage">确定要执行此操作吗？</p>
+                <div class="form-check" id="bulkPermanentDeleteContainer" style="display: none;">
+                    <input class="form-check-input" type="checkbox" id="bulkPermanentDelete">
+                    <label class="form-check-label" for="bulkPermanentDelete">
+                        永久删除 (此操作不可恢复)
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="confirmBulkAction">确定</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin-posts.js') }}"></script>
+<script src="{{ url_for('static', filename='js/admin-posts-analytics.js') }}"></script>
+{% endblock %} 
