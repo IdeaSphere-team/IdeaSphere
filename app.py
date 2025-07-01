@@ -1,9 +1,11 @@
 import os
 
 import pytz
+import logging
 from flask import Flask, request, session, redirect, url_for, g, jsonify, render_template
 from flask_apscheduler import APScheduler
 from flask_wtf.csrf import CSRFProtect
+from logging.handlers import RotatingFileHandler
 
 from src.db_ext import db
 from src.functions.api.api import api_bp
@@ -324,20 +326,46 @@ if __name__ == '__main__':
     if not os.path.exists(log_path):
         os.makedirs(log_path, exist_ok=True)
 
-    log_thread = Logger(
-        threadID=1,
-        name="LogThread",
-        counter=1,
-        msg="Initialize Log",
-        mode="info",
-        module_name="Server",
-        log_path=log_path
-    )
-    log_thread.start()
-    log_thread.package(config.get('log-size', 1000000000))
+    # 初始化数据库
+    initialize_database(app)
+
+    # 从配置中获取日志设置
+    config = get_config()
+    log_config = config.get('log', {})
+    log_level = log_config.get('level', 'INFO').upper()
+    log_output = log_config.get('output', 'console')
+    log_path = log_config.get('log_path', './logs/server.log')
+    log_format = log_config.get('format', '[%(asctime)s] - [%(levelname)s] - %(message)s')
+
+    # 设置日志记录器
+    logger = logging.getLogger()
+    logger.setLevel(log_level)
+
+    formatter = logging.Formatter(log_format)
+
+    if log_output == 'file':
+        # 如果输出到文件，则使用RotatingFileHandler（可选）
+        handler = RotatingFileHandler(
+            log_path,
+            maxBytes=1024 * 1024 * 10,  # 10 MB
+            backupCount=5  # 保留5个备份
+        )
+    else:
+        # 如果输出到控制台
+        handler = logging.StreamHandler()
+
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
+    # 关闭 Flask 默认的日志记录器
+    werkzeug_logger = logging.getLogger('werkzeug')
+    werkzeug_logger.setLevel(logging.WARNING)  # 或者设置为 logging.ERROR
+
+    # 测试日志输出
+    logger.info("Server starting...")
+
+    # 启动服务器
     from livereload import Server
-    initialize_database(app)  # 调用数据库初始化函数
     server = Server(app.wsgi_app)
-    # 监控templates文件夹下的所有文件改动
     server.watch('templates/**/*.*', ignore=None)
     server.serve(port=config.get('port', 5000), debug=config.get('debug', True))

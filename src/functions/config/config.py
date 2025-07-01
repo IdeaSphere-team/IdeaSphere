@@ -11,7 +11,6 @@ def ensure_config_directory():
 def get_config():
     config_path = ensure_config_directory()  # 生成 config.yml 文件路径
     if not os.path.exists(config_path):
-        # 定义默认配置内容
         default_config_content = """
 # IdeaSphere 配置文件
 # 开源地址：https://github.com/IdeaSphere-team/IdeaSphere
@@ -37,6 +36,13 @@ database:
 csrf:
   enabled: True # 默认开启
   ssl_strict: True # 默认开启
+
+# 日志配置
+log:
+  level: INFO # 日志级别，可选：DEBUG, INFO, WARNING, ERROR, CRITICAL
+  output: console # 日志输出方式，可选：console 或 file
+  log_path: './logs/server.log' # 日志文件路径（当 output 为 file 时有效）
+  format: '[%(asctime)s] - [%(levelname)s] - %(message)s' # 日志格式
 """
         # 使用 UTF-8 编码写入文件
         with open(config_path, 'w', encoding='utf-8') as f:
